@@ -95,6 +95,12 @@ h1 {
   line-height: 0.95;
 }
 
+.setup-title {
+  max-width: 760px;
+  font-size: clamp(3rem, 9vw, 6.4rem);
+  line-height: 0.9;
+}
+
 h2 {
   margin-bottom: 8px;
   font-size: 1.15rem;

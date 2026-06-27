@@ -311,8 +311,7 @@ function App() {
         <div className="brand-mark" aria-hidden="true">
           <ShieldCheck size={34} />
         </div>
-        <p className="eyebrow">AP CSA Conditional Escape Room</p>
-        <h1>Start a deterministic conditionals room</h1>
+        <h1 className="setup-title">AP CSA Conditional Escape Room</h1>
         <p className="intro">
           Enter the class code and team names. The same team and code will always rebuild the same room,
           while other teams receive different selected locks and shuffled answer choices.
