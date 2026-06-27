@@ -173,18 +173,18 @@ if (guess ___ secret) {
         title: 'Compound Boolean Expressions',
         category: 'Boolean logic',
         prompt: 'What is the value of the expression?',
-        code: `int age = 16;
+        code: `int age = 15;
 boolean hasPermit = true;
 
 age >= 16 && hasPermit`,
         choices: [
-          { id: 'a', label: 'true', isCorrect: true },
-          { id: 'b', label: 'false', isCorrect: false },
+          { id: 'a', label: 'true', isCorrect: false },
+          { id: 'b', label: 'false', isCorrect: true },
           { id: 'c', label: 'The code does not compile', isCorrect: false },
           { id: 'd', label: 'It depends on the previous if statement', isCorrect: false },
         ],
-        explanation: 'Both parts of the && expression are true, so the full expression is true.',
-        hints: ['With &&, both sides must be true.', 'Evaluate each side separately.'],
+        explanation: 'age >= 16 is false when age is 15, so the full && expression is false.',
+        hints: ['With &&, both sides must be true.', 'Evaluate age >= 16 before checking the whole expression.'],
       },
       {
         id: 'compound-boolean-2',
