@@ -83,6 +83,7 @@ function App() {
               <div>
                 <p className="lock-type">{lock.category}</p>
                 <h2>{lock.title}</h2>
+                <p className="variant-label">Variant: {lock.challengeId}</p>
                 <p>{lock.prompt}</p>
                 <pre>
                   <code>{lock.code}</code>

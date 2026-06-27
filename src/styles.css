@@ -261,6 +261,13 @@ input:focus {
   text-transform: uppercase;
 }
 
+.variant-label {
+  margin-bottom: 10px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
 pre {
   overflow: auto;
   border: 1px solid #d8dde3;
