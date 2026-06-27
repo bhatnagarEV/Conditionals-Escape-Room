@@ -41,6 +41,22 @@ function buildCompletionCode(room: RoomSession, totalAttempts: number): string {
   return `CSA-COND-${codeNumber.toString(16).toUpperCase().slice(0, 6)}`;
 }
 
+function getLockScore(room: RoomSession, lockId: string): number {
+  if ((room.failedLocks ?? []).includes(lockId)) {
+    return 0;
+  }
+
+  if (!room.completedLocks.includes(lockId)) {
+    return 0;
+  }
+
+  return (room.attemptsByLock[lockId] ?? 0) <= 1 ? 1 : 0.5;
+}
+
+function formatScore(score: number): string {
+  return Number.isInteger(score) ? score.toString() : score.toFixed(1);
+}
+
 function App() {
   const [classCode, setClassCode] = useState('Conditionals-P4');
   const [studentNames, setStudentNames] = useState(defaultNames);
@@ -164,6 +180,7 @@ function App() {
     const solvedCount = room.completedLocks.length;
     const failedCount = failedLocks.length;
     const totalAttempts = Object.values(room.attemptsByLock).reduce((sum, attempts) => sum + attempts, 0);
+    const earnedPoints = room.locks.reduce((sum, lock) => sum + getLockScore(room, lock.lockId), 0);
     const isComplete = processedCount === room.locks.length;
     const completedAt = room.completedAt ?? new Date().toISOString();
     const completionCode = buildCompletionCode(room, totalAttempts);
@@ -261,7 +278,7 @@ function App() {
               </div>
               <div>
                 <span>Score</span>
-                <strong>{solvedCount} / {room.locks.length}</strong>
+                <strong>{formatScore(earnedPoints)} / {room.locks.length}</strong>
               </div>
               <div>
                 <span>Zero Scores</span>
@@ -281,12 +298,13 @@ function App() {
                     <th>Challenge</th>
                     <th>Variant</th>
                     <th>Attempts</th>
-                    <th>Score</th>
+                    <th>Points</th>
                   </tr>
                 </thead>
                 <tbody>
                   {room.locks.map((lock, index) => {
                     const wasFailed = failedLocks.includes(lock.lockId);
+                    const lockScore = getLockScore(room, lock.lockId);
                     return (
                       <tr key={lock.lockId} className={wasFailed ? 'summary-failed-row' : ''}>
                         <td>{index + 1}</td>
@@ -296,7 +314,7 @@ function App() {
                         </td>
                         <td>{lock.challengeId}</td>
                         <td>{room.attemptsByLock[lock.lockId] ?? 0}</td>
-                        <td>{wasFailed ? '0' : '1'}</td>
+                        <td>{formatScore(lockScore)}</td>
                       </tr>
                     );
                   })}
