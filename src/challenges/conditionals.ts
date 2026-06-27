@@ -1,4 +1,184 @@
-import type { LockDefinition } from '../types';
+import type { ChallengeTemplate, LockDefinition, LockType } from '../types';
+
+type ChallengeInput = {
+  id: number;
+  lockType: LockType;
+  title: string;
+  category: string;
+  prompt: string;
+  code: string;
+  correct: string;
+  distractors: [string, string, string];
+  explanation: string;
+  hints: [string, string];
+};
+
+const makeChallenge = ({
+  id,
+  lockType,
+  title,
+  category,
+  prompt,
+  code,
+  correct,
+  distractors,
+  explanation,
+  hints,
+}: ChallengeInput): ChallengeTemplate => ({
+  id: `${lockType}-${id}`,
+  lockType,
+  title,
+  category,
+  prompt,
+  code,
+  choices: [correct, ...distractors].map((label, index) => ({
+    id: String.fromCharCode(97 + index),
+    label,
+    isCorrect: index === 0,
+  })),
+  explanation,
+  hints,
+});
+
+const predictOutput = (id: number, code: string, correct: string, distractors: [string, string, string], explanation: string) =>
+  makeChallenge({
+    id,
+    lockType: 'predict-output',
+    title: 'Predict Output',
+    category: 'Basic if / else',
+    prompt: 'What is printed by this code?',
+    code,
+    correct,
+    distractors,
+    explanation,
+    hints: ['Trace the conditions from top to bottom.', 'Only one branch in an if / else-if / else chain executes.'],
+  });
+
+const branchExecutes = (id: number, code: string, correct: string, distractors: [string, string, string], explanation: string) =>
+  makeChallenge({
+    id,
+    lockType: 'branch-executes',
+    title: 'Which Branch Executes',
+    category: 'Branch tracing',
+    prompt: 'Which branch executes when this code runs?',
+    code,
+    correct,
+    distractors,
+    explanation,
+    hints: ['Evaluate the conditions in order.', 'The first true condition wins.'],
+  });
+
+const comparisonOperator = (id: number, prompt: string, code: string, correct: string, distractors: [string, string, string], explanation: string) =>
+  makeChallenge({
+    id,
+    lockType: 'comparison-operator',
+    title: 'Choose Comparison Operator',
+    category: 'Relational operators',
+    prompt,
+    code,
+    correct,
+    distractors,
+    explanation,
+    hints: ['Match the operator to the exact wording.', 'Remember that == compares primitive values for equality.'],
+  });
+
+const compoundBoolean = (id: number, code: string, correct: string, explanation: string) =>
+  makeChallenge({
+    id,
+    lockType: 'compound-boolean',
+    title: 'Compound Boolean Expressions',
+    category: 'Boolean logic',
+    prompt: 'What is the value of the expression?',
+    code,
+    correct,
+    distractors: correct === 'true' ? ['false', 'The code does not compile', 'It depends on a previous if statement'] : ['true', 'The code does not compile', 'It depends on a previous if statement'],
+    explanation,
+    hints: ['Evaluate each comparison first.', 'Apply ! before combining expressions with && or ||.'],
+  });
+
+const shortCircuit = (id: number, prompt: string, code: string, correct: string, distractors: [string, string, string], explanation: string) =>
+  makeChallenge({
+    id,
+    lockType: 'short-circuit',
+    title: 'Short-Circuit Evaluation',
+    category: 'Short-circuit logic',
+    prompt,
+    code,
+    correct,
+    distractors,
+    explanation,
+    hints: ['Java evaluates boolean expressions from left to right.', '&& can stop on false; || can stop on true.'],
+  });
+
+const arrangeBranches = (id: number, prompt: string, code: string, correct: string, distractors: [string, string, string], explanation: string) =>
+  makeChallenge({
+    id,
+    lockType: 'arrange-branches',
+    title: 'Arrange if / else-if / else',
+    category: 'Code ordering',
+    prompt,
+    code,
+    correct,
+    distractors,
+    explanation,
+    hints: ['A chain must start with if.', 'A plain else must come after all else-if blocks.'],
+  });
+
+const nestedIf = (id: number, code: string, correct: string, distractors: [string, string, string], explanation: string) =>
+  makeChallenge({
+    id,
+    lockType: 'nested-if',
+    title: 'Nested If Trace',
+    category: 'Nested conditionals',
+    prompt: 'What is printed by the nested conditional?',
+    code,
+    correct,
+    distractors,
+    explanation,
+    hints: ['Trace the outer condition first.', 'Only enter an inner if when the outer branch runs.'],
+  });
+
+const demorgan = (id: number, code: string, correct: string, distractors: [string, string, string], explanation: string) =>
+  makeChallenge({
+    id,
+    lockType: 'demorgan',
+    title: "DeMorgan's Law",
+    category: 'Equivalent expressions',
+    prompt: 'Which expression is equivalent?',
+    code,
+    correct,
+    distractors,
+    explanation,
+    hints: ['DeMorgan changes && to ||, and || to &&.', 'Negate each comparison carefully.'],
+  });
+
+const findBug = (id: number, prompt: string, code: string, correct: string, distractors: [string, string, string], explanation: string) =>
+  makeChallenge({
+    id,
+    lockType: 'find-bug',
+    title: 'Find the Bug',
+    category: 'Debugging conditionals',
+    prompt,
+    code,
+    correct,
+    distractors,
+    explanation,
+    hints: ['Look closely at the condition.', 'Ask what Java actually matches, compares, or evaluates.'],
+  });
+
+const finalBoss = (id: number, code: string, correct: string, distractors: [string, string, string], explanation: string) =>
+  makeChallenge({
+    id,
+    lockType: 'final-boss',
+    title: 'Final Boss',
+    category: 'Mixed conditional trace',
+    prompt: 'What is the final value of result?',
+    code,
+    correct,
+    distractors,
+    explanation,
+    hints: ['Trace the code in order.', 'Stop when the first true branch in the chain runs.'],
+  });
 
 export const conditionalsLocks: LockDefinition[] = [
   {
@@ -7,13 +187,7 @@ export const conditionalsLocks: LockDefinition[] = [
     title: 'Predict Output',
     lockType: 'predict-output',
     bank: [
-      {
-        id: 'predict-output-1',
-        lockType: 'predict-output',
-        title: 'Predict Output',
-        category: 'Basic if / else',
-        prompt: 'What is printed by this code?',
-        code: `int score = 84;
+      predictOutput(1, `int score = 84;
 
 if (score >= 90) {
     System.out.println("A");
@@ -21,45 +195,15 @@ if (score >= 90) {
     System.out.println("B");
 } else {
     System.out.println("Keep practicing");
-}`,
-        choices: [
-          { id: 'a', label: 'A', isCorrect: false },
-          { id: 'b', label: 'B', isCorrect: true },
-          { id: 'c', label: 'Keep practicing', isCorrect: false },
-          { id: 'd', label: 'Nothing is printed', isCorrect: false },
-        ],
-        explanation: 'The score is at least 80 but less than 90, so the else-if branch prints B.',
-        hints: ['Check the first condition before moving to the else-if.', 'Only one branch in an if / else-if / else chain executes.'],
-      },
-      {
-        id: 'predict-output-2',
-        lockType: 'predict-output',
-        title: 'Predict Output',
-        category: 'Basic if / else',
-        prompt: 'What is printed by this code?',
-        code: `int lives = 0;
+}`, 'B', ['A', 'Keep practicing', 'Nothing is printed'], '84 is at least 80 but less than 90, so B is printed.'),
+      predictOutput(2, `int lives = 0;
 
 if (lives > 0) {
     System.out.println("Keep playing");
 } else {
     System.out.println("Game over");
-}`,
-        choices: [
-          { id: 'a', label: 'Keep playing', isCorrect: false },
-          { id: 'b', label: 'Game over', isCorrect: true },
-          { id: 'c', label: '0', isCorrect: false },
-          { id: 'd', label: 'Nothing is printed', isCorrect: false },
-        ],
-        explanation: 'The condition lives > 0 is false, so the else branch prints Game over.',
-        hints: ['Substitute 0 for lives.', 'When an if condition is false, Java checks the else branch.'],
-      },
-      {
-        id: 'predict-output-3',
-        lockType: 'predict-output',
-        title: 'Predict Output',
-        category: 'Basic if / else',
-        prompt: 'What is printed by this code?',
-        code: `int battery = 95;
+}`, 'Game over', ['Keep playing', '0', 'Nothing is printed'], 'lives > 0 is false, so the else branch prints Game over.'),
+      predictOutput(3, `int battery = 95;
 
 if (battery >= 90) {
     System.out.println("Full power");
@@ -67,23 +211,8 @@ if (battery >= 90) {
     System.out.println("Keep going");
 } else {
     System.out.println("Recharge");
-}`,
-        choices: [
-          { id: 'a', label: 'Full power', isCorrect: true },
-          { id: 'b', label: 'Keep going', isCorrect: false },
-          { id: 'c', label: 'Recharge', isCorrect: false },
-          { id: 'd', label: '95', isCorrect: false },
-        ],
-        explanation: 'battery >= 90 is true, so the first branch prints Full power.',
-        hints: ['Check the first condition before any else-if.', 'A true if branch skips the rest of the chain.'],
-      },
-      {
-        id: 'predict-output-4',
-        lockType: 'predict-output',
-        title: 'Predict Output',
-        category: 'Basic if / else',
-        prompt: 'What is printed by this code?',
-        code: `int tickets = 2;
+}`, 'Full power', ['Keep going', 'Recharge', '95'], 'battery >= 90 is true, so Full power is printed.'),
+      predictOutput(4, `int tickets = 2;
 
 if (tickets >= 5) {
     System.out.println("Prize");
@@ -91,16 +220,71 @@ if (tickets >= 5) {
     System.out.println("Sticker");
 } else {
     System.out.println("Try again");
-}`,
-        choices: [
-          { id: 'a', label: 'Prize', isCorrect: false },
-          { id: 'b', label: 'Sticker', isCorrect: false },
-          { id: 'c', label: 'Try again', isCorrect: true },
-          { id: 'd', label: 'Nothing is printed', isCorrect: false },
-        ],
-        explanation: '2 is less than both cutoffs, so the else branch prints Try again.',
-        hints: ['Evaluate the comparisons using tickets = 2.', 'The else branch runs if no earlier condition is true.'],
-      },
+}`, 'Try again', ['Prize', 'Sticker', 'Nothing is printed'], '2 is below both cutoffs, so the else branch prints Try again.'),
+      predictOutput(5, `int x = 5;
+
+if (x > 5) {
+    System.out.println("greater");
+} else if (x == 5) {
+    System.out.println("equal");
+} else {
+    System.out.println("less");
+}`, 'equal', ['greater', 'less', '5'], 'x == 5 is true after x > 5 is false.'),
+      predictOutput(6, `int absences = 4;
+
+if (absences >= 5) {
+    System.out.println("conference");
+} else {
+    System.out.println("ok");
+}`, 'ok', ['conference', '4', 'Nothing is printed'], '4 is not at least 5, so ok is printed.'),
+      predictOutput(7, `int rank = 1;
+
+if (rank == 1) {
+    System.out.println("gold");
+} else if (rank == 2) {
+    System.out.println("silver");
+} else {
+    System.out.println("bronze");
+}`, 'gold', ['silver', 'bronze', 'rank'], 'rank == 1 is true, so gold is printed.'),
+      predictOutput(8, `int waterLevel = 30;
+
+if (waterLevel < 20) {
+    System.out.println("low");
+} else if (waterLevel < 50) {
+    System.out.println("medium");
+} else {
+    System.out.println("high");
+}`, 'medium', ['low', 'high', '30'], '30 is not below 20, but it is below 50.'),
+      predictOutput(9, `boolean locked = true;
+
+if (!locked) {
+    System.out.println("enter");
+} else {
+    System.out.println("wait");
+}`, 'wait', ['enter', 'true', 'Nothing is printed'], '!locked is false because locked is true.'),
+      predictOutput(10, `int streak = 10;
+
+if (streak % 2 == 0) {
+    System.out.println("even streak");
+} else {
+    System.out.println("odd streak");
+}`, 'even streak', ['odd streak', '10', 'Nothing is printed'], '10 % 2 is 0, so the even branch runs.'),
+      predictOutput(11, `int files = 12;
+
+if (files > 20) {
+    System.out.println("archive");
+} else if (files > 10) {
+    System.out.println("review");
+} else {
+    System.out.println("ignore");
+}`, 'review', ['archive', 'ignore', '12'], '12 is greater than 10 but not greater than 20.'),
+      predictOutput(12, `int gems = -1;
+
+if (gems >= 0) {
+    System.out.println("inventory");
+} else {
+    System.out.println("error");
+}`, 'error', ['inventory', '-1', 'Nothing is printed'], '-1 is not greater than or equal to 0.'),
     ],
   },
   {
@@ -109,13 +293,7 @@ if (tickets >= 5) {
     title: 'Which Branch Executes',
     lockType: 'branch-executes',
     bank: [
-      {
-        id: 'branch-executes-1',
-        lockType: 'branch-executes',
-        title: 'Which Branch Executes',
-        category: 'Branch tracing',
-        prompt: 'Which branch executes when this code runs?',
-        code: `int temp = 72;
+      branchExecutes(1, `int temp = 72;
 
 if (temp > 80) {
     System.out.println("hot");
@@ -123,23 +301,8 @@ if (temp > 80) {
     System.out.println("warm");
 } else {
     System.out.println("cool");
-}`,
-        choices: [
-          { id: 'a', label: 'if branch', isCorrect: false },
-          { id: 'b', label: 'else-if branch', isCorrect: true },
-          { id: 'c', label: 'else branch', isCorrect: false },
-          { id: 'd', label: 'Both if and else-if branches', isCorrect: false },
-        ],
-        explanation: '72 is not greater than 80, but it is greater than or equal to 70.',
-        hints: ['Evaluate the conditions from top to bottom.', 'Stop as soon as one condition is true.'],
-      },
-      {
-        id: 'branch-executes-2',
-        lockType: 'branch-executes',
-        title: 'Which Branch Executes',
-        category: 'Branch tracing',
-        prompt: 'Which branch executes when this code runs?',
-        code: `int points = 50;
+}`, 'else-if branch that prints "warm"', ['if branch that prints "hot"', 'else branch that prints "cool"', 'No branch executes'], '72 reaches the else-if branch.'),
+      branchExecutes(2, `int points = 50;
 
 if (points >= 100) {
     System.out.println("gold");
@@ -147,23 +310,8 @@ if (points >= 100) {
     System.out.println("silver");
 } else {
     System.out.println("bronze");
-}`,
-        choices: [
-          { id: 'a', label: 'if branch', isCorrect: false },
-          { id: 'b', label: 'else-if branch', isCorrect: true },
-          { id: 'c', label: 'else branch', isCorrect: false },
-          { id: 'd', label: 'No branch executes', isCorrect: false },
-        ],
-        explanation: '50 is not at least 100, but it is at least 50, so the else-if branch executes.',
-        hints: ['The first true branch wins.', '>= includes the exact value on the right side.'],
-      },
-      {
-        id: 'branch-executes-3',
-        lockType: 'branch-executes',
-        title: 'Which Branch Executes',
-        category: 'Branch tracing',
-        prompt: 'Which branch executes when this code runs?',
-        code: `int level = 12;
+}`, 'else-if branch that prints "silver"', ['if branch that prints "gold"', 'else branch that prints "bronze"', 'Both branches execute'], '50 is not at least 100, but it is at least 50.'),
+      branchExecutes(3, `int level = 12;
 
 if (level > 10) {
     System.out.println("expert");
@@ -171,23 +319,8 @@ if (level > 10) {
     System.out.println("intermediate");
 } else {
     System.out.println("beginner");
-}`,
-        choices: [
-          { id: 'a', label: 'if branch', isCorrect: true },
-          { id: 'b', label: 'else-if branch', isCorrect: false },
-          { id: 'c', label: 'else branch', isCorrect: false },
-          { id: 'd', label: 'Both if and else-if branches', isCorrect: false },
-        ],
-        explanation: 'level > 10 is true, so the first if branch executes and the rest is skipped.',
-        hints: ['The first condition is checked first.', 'A chain stops after the first true condition.'],
-      },
-      {
-        id: 'branch-executes-4',
-        lockType: 'branch-executes',
-        title: 'Which Branch Executes',
-        category: 'Branch tracing',
-        prompt: 'Which branch executes when this code runs?',
-        code: `int minutesLate = 18;
+}`, 'if branch that prints "expert"', ['else-if branch that prints "intermediate"', 'else branch that prints "beginner"', 'Both if and else-if branches'], 'level > 10 is true.'),
+      branchExecutes(4, `int minutesLate = 18;
 
 if (minutesLate < 5) {
     System.out.println("on time");
@@ -195,16 +328,77 @@ if (minutesLate < 5) {
     System.out.println("warning");
 } else {
     System.out.println("detention");
-}`,
-        choices: [
-          { id: 'a', label: 'if branch', isCorrect: false },
-          { id: 'b', label: 'else-if branch', isCorrect: false },
-          { id: 'c', label: 'else branch', isCorrect: true },
-          { id: 'd', label: 'No branch executes', isCorrect: false },
-        ],
-        explanation: '18 is not less than 5 or 15, so the else branch executes.',
-        hints: ['Check both comparisons with minutesLate = 18.', 'The else handles all remaining cases.'],
-      },
+}`, 'else branch that prints "detention"', ['if branch that prints "on time"', 'else-if branch that prints "warning"', 'No branch executes'], '18 is not less than 5 or 15.'),
+      branchExecutes(5, `int pages = 3;
+
+if (pages > 10) {
+    System.out.println("long");
+} else if (pages > 5) {
+    System.out.println("medium");
+} else {
+    System.out.println("short");
+}`, 'else branch that prints "short"', ['if branch that prints "long"', 'else-if branch that prints "medium"', 'Both conditions are true'], '3 fails both earlier comparisons.'),
+      branchExecutes(6, `int speed = 55;
+
+if (speed >= 65) {
+    System.out.println("fast");
+} else if (speed >= 40) {
+    System.out.println("steady");
+} else {
+    System.out.println("slow");
+}`, 'else-if branch that prints "steady"', ['if branch that prints "fast"', 'else branch that prints "slow"', 'No branch executes'], '55 is at least 40 but below 65.'),
+      branchExecutes(7, `boolean isMember = true;
+
+if (isMember) {
+    System.out.println("discount");
+} else {
+    System.out.println("regular");
+}`, 'if branch that prints "discount"', ['else branch that prints "regular"', 'Both branches execute', 'No branch executes'], 'isMember is true.'),
+      branchExecutes(8, `int rating = 1;
+
+if (rating == 5) {
+    System.out.println("excellent");
+} else if (rating >= 3) {
+    System.out.println("okay");
+} else {
+    System.out.println("poor");
+}`, 'else branch that prints "poor"', ['if branch that prints "excellent"', 'else-if branch that prints "okay"', 'No branch executes'], '1 does not meet the first two conditions.'),
+      branchExecutes(9, `int balance = 0;
+
+if (balance < 0) {
+    System.out.println("overdrawn");
+} else if (balance == 0) {
+    System.out.println("empty");
+} else {
+    System.out.println("positive");
+}`, 'else-if branch that prints "empty"', ['if branch that prints "overdrawn"', 'else branch that prints "positive"', 'Both if and else-if branches'], 'balance == 0 is true after balance < 0 is false.'),
+      branchExecutes(10, `int distance = 101;
+
+if (distance > 100) {
+    System.out.println("far");
+} else if (distance > 50) {
+    System.out.println("near");
+} else {
+    System.out.println("close");
+}`, 'if branch that prints "far"', ['else-if branch that prints "near"', 'else branch that prints "close"', 'Both if and else-if branches'], '101 is greater than 100.'),
+      branchExecutes(11, `int attempts = 2;
+
+if (attempts == 1) {
+    System.out.println("first");
+} else if (attempts == 2) {
+    System.out.println("second");
+} else {
+    System.out.println("later");
+}`, 'else-if branch that prints "second"', ['if branch that prints "first"', 'else branch that prints "later"', 'No branch executes'], 'attempts == 2 is true.'),
+      branchExecutes(12, `int height = 48;
+
+if (height >= 60) {
+    System.out.println("ride");
+} else if (height >= 50) {
+    System.out.println("with adult");
+} else {
+    System.out.println("wait");
+}`, 'else branch that prints "wait"', ['if branch that prints "ride"', 'else-if branch that prints "with adult"', 'Both branches execute'], '48 is below both height cutoffs.'),
     ],
   },
   {
@@ -213,88 +407,70 @@ if (minutesLate < 5) {
     title: 'Choose Comparison Operator',
     lockType: 'comparison-operator',
     bank: [
-      {
-        id: 'comparison-operator-1',
-        lockType: 'comparison-operator',
-        title: 'Choose Comparison Operator',
-        category: 'Relational operators',
-        prompt: 'Which operator correctly checks whether a player has enough coins?',
-        code: `int coins = 12;
+      comparisonOperator(1, 'Which operator correctly checks whether a player has enough coins?', `int coins = 12;
 int cost = 10;
 
 if (coins ___ cost) {
     System.out.println("Buy item");
-}`,
-        choices: [
-          { id: 'a', label: '>', isCorrect: false },
-          { id: 'b', label: '>=', isCorrect: true },
-          { id: 'c', label: '<=', isCorrect: false },
-          { id: 'd', label: '==', isCorrect: false },
-        ],
-        explanation: 'Enough coins means the player can have exactly the cost or more, so >= is the best operator.',
-        hints: ['Think about whether exactly 10 coins should work.', 'Enough means equal to the cost is allowed.'],
-      },
-      {
-        id: 'comparison-operator-2',
-        lockType: 'comparison-operator',
-        title: 'Choose Comparison Operator',
-        category: 'Relational operators',
-        prompt: 'Which operator correctly checks whether the guess is not the secret number?',
-        code: `int guess = 4;
+}`, '>=', ['>', '<=', '=='], 'Enough means the player can have exactly the cost or more.'),
+      comparisonOperator(2, 'Which operator correctly checks whether the guess is not the secret number?', `int guess = 4;
 int secret = 9;
 
 if (guess ___ secret) {
     System.out.println("Try again");
-}`,
-        choices: [
-          { id: 'a', label: '!=', isCorrect: true },
-          { id: 'b', label: '==', isCorrect: false },
-          { id: 'c', label: '>=', isCorrect: false },
-          { id: 'd', label: '<=', isCorrect: false },
-        ],
-        explanation: 'The != operator checks whether two primitive values are not equal.',
-        hints: ['The prompt says not the secret number.', '!= means not equal.'],
-      },
-      {
-        id: 'comparison-operator-3',
-        lockType: 'comparison-operator',
-        title: 'Choose Comparison Operator',
-        category: 'Relational operators',
-        prompt: 'Which operator correctly checks whether the temperature is below freezing?',
-        code: `int temperature = 28;
+}`, '!=', ['==', '>=', '<='], '!= checks that two primitive values are not equal.'),
+      comparisonOperator(3, 'Which operator correctly checks whether the temperature is below freezing?', `int temperature = 28;
 
 if (temperature ___ 32) {
     System.out.println("Freeze warning");
-}`,
-        choices: [
-          { id: 'a', label: '<', isCorrect: true },
-          { id: 'b', label: '>', isCorrect: false },
-          { id: 'c', label: '==', isCorrect: false },
-          { id: 'd', label: '>=', isCorrect: false },
-        ],
-        explanation: 'Below freezing means the temperature is less than 32.',
-        hints: ['Below means less than.', 'Do not include exactly 32 if the prompt says below.'],
-      },
-      {
-        id: 'comparison-operator-4',
-        lockType: 'comparison-operator',
-        title: 'Choose Comparison Operator',
-        category: 'Relational operators',
-        prompt: 'Which operator correctly checks whether the score is exactly perfect?',
-        code: `int score = 100;
+}`, '<', ['>', '==', '>='], 'Below means less than.'),
+      comparisonOperator(4, 'Which operator correctly checks whether the score is exactly perfect?', `int score = 100;
 
 if (score ___ 100) {
     System.out.println("Perfect");
-}`,
-        choices: [
-          { id: 'a', label: '>=', isCorrect: false },
-          { id: 'b', label: '<=', isCorrect: false },
-          { id: 'c', label: '==', isCorrect: true },
-          { id: 'd', label: '!=', isCorrect: false },
-        ],
-        explanation: 'Exactly perfect means score must equal 100, so == is the correct operator.',
-        hints: ['Exactly means equal to.', 'A single = is assignment, not comparison.'],
-      },
+}`, '==', ['>=', '<=', '!='], 'Exactly means equal to.'),
+      comparisonOperator(5, 'Which operator correctly checks whether a number is positive?', `int number = 7;
+
+if (number ___ 0) {
+    System.out.println("positive");
+}`, '>', ['>=', '<', '=='], 'Positive numbers are greater than 0.'),
+      comparisonOperator(6, 'Which operator correctly checks whether a value is at most 10?', `int value = 8;
+
+if (value ___ 10) {
+    System.out.println("in range");
+}`, '<=', ['<', '>=', '!='], 'At most 10 means less than or equal to 10.'),
+      comparisonOperator(7, 'Which operator correctly checks whether the level has not reached the limit?', `int level = 3;
+int limit = 5;
+
+if (level ___ limit) {
+    System.out.println("keep going");
+}`, '<', ['>', '==', '>='], 'Not reached the limit means level is less than limit.'),
+      comparisonOperator(8, 'Which operator correctly checks whether a door is closed?', `boolean open = false;
+
+if (open ___ false) {
+    System.out.println("closed");
+}`, '==', ['!=', '>', '<'], 'A boolean can be compared to false with ==.'),
+      comparisonOperator(9, 'Which operator correctly checks whether the count is not zero?', `int count = 3;
+
+if (count ___ 0) {
+    System.out.println("has items");
+}`, '!=', ['==', '<', '<='], 'Not zero means != 0.'),
+      comparisonOperator(10, 'Which operator correctly checks whether a student qualifies with 75 or higher?', `int grade = 75;
+
+if (grade ___ 75) {
+    System.out.println("qualifies");
+}`, '>=', ['>', '<=', '=='], '75 itself should qualify, so use >=.'),
+      comparisonOperator(11, 'Which operator correctly checks whether the timer has expired?', `int seconds = 0;
+
+if (seconds ___ 0) {
+    System.out.println("expired");
+}`, '==', ['!=', '<', '>'], 'Expired happens exactly when seconds equals 0.'),
+      comparisonOperator(12, 'Which operator correctly checks whether a price is over the budget?', `int price = 42;
+int budget = 40;
+
+if (price ___ budget) {
+    System.out.println("too expensive");
+}`, '>', ['>=', '<', '=='], 'Over the budget means greater than the budget.'),
     ],
   },
   {
@@ -303,82 +479,52 @@ if (score ___ 100) {
     title: 'Compound Boolean Expressions',
     lockType: 'compound-boolean',
     bank: [
-      {
-        id: 'compound-boolean-1',
-        lockType: 'compound-boolean',
-        title: 'Compound Boolean Expressions',
-        category: 'Boolean logic',
-        prompt: 'What is the value of the expression?',
-        code: `int age = 15;
+      compoundBoolean(1, `int age = 15;
 boolean hasPermit = true;
 
-age >= 16 && hasPermit`,
-        choices: [
-          { id: 'a', label: 'true', isCorrect: false },
-          { id: 'b', label: 'false', isCorrect: true },
-          { id: 'c', label: 'The code does not compile', isCorrect: false },
-          { id: 'd', label: 'It depends on the previous if statement', isCorrect: false },
-        ],
-        explanation: 'age >= 16 is false when age is 15, so the full && expression is false.',
-        hints: ['With &&, both sides must be true.', 'Evaluate age >= 16 before checking the whole expression.'],
-      },
-      {
-        id: 'compound-boolean-2',
-        lockType: 'compound-boolean',
-        title: 'Compound Boolean Expressions',
-        category: 'Boolean logic',
-        prompt: 'What is the value of the expression?',
-        code: `int hour = 21;
+age >= 16 && hasPermit`, 'false', 'age >= 16 is false when age is 15.'),
+      compoundBoolean(2, `int hour = 21;
 boolean isWeekend = false;
 
-hour < 8 || hour > 20 || isWeekend`,
-        choices: [
-          { id: 'a', label: 'true', isCorrect: true },
-          { id: 'b', label: 'false', isCorrect: false },
-          { id: 'c', label: 'The code does not compile', isCorrect: false },
-          { id: 'd', label: 'Only true on Saturday', isCorrect: false },
-        ],
-        explanation: 'hour > 20 is true, so the full || expression is true.',
-        hints: ['With ||, one true part is enough.', 'Evaluate hour > 20 carefully.'],
-      },
-      {
-        id: 'compound-boolean-3',
-        lockType: 'compound-boolean',
-        title: 'Compound Boolean Expressions',
-        category: 'Boolean logic',
-        prompt: 'What is the value of the expression?',
-        code: `int score = 72;
+hour < 8 || hour > 20 || isWeekend`, 'true', 'hour > 20 is true.'),
+      compoundBoolean(3, `int score = 72;
 boolean extraCredit = false;
 
-score >= 70 && !extraCredit`,
-        choices: [
-          { id: 'a', label: 'true', isCorrect: true },
-          { id: 'b', label: 'false', isCorrect: false },
-          { id: 'c', label: '72', isCorrect: false },
-          { id: 'd', label: 'The code does not compile', isCorrect: false },
-        ],
-        explanation: 'score >= 70 is true and !extraCredit is also true, so the whole && expression is true.',
-        hints: ['The ! operator flips a boolean value.', 'Both sides of && must be true.'],
-      },
-      {
-        id: 'compound-boolean-4',
-        lockType: 'compound-boolean',
-        title: 'Compound Boolean Expressions',
-        category: 'Boolean logic',
-        prompt: 'What is the value of the expression?',
-        code: `int x = 4;
+score >= 70 && !extraCredit`, 'true', 'score >= 70 is true and !extraCredit is true.'),
+      compoundBoolean(4, `int x = 4;
 int y = 9;
 
-x > 5 || y < 3`,
-        choices: [
-          { id: 'a', label: 'true', isCorrect: false },
-          { id: 'b', label: 'false', isCorrect: true },
-          { id: 'c', label: '13', isCorrect: false },
-          { id: 'd', label: 'The code does not compile', isCorrect: false },
-        ],
-        explanation: 'x > 5 is false and y < 3 is false, so the || expression is false.',
-        hints: ['With ||, at least one side must be true.', 'Evaluate both comparisons separately.'],
-      },
+x > 5 || y < 3`, 'false', 'Both comparisons are false.'),
+      compoundBoolean(5, `boolean raining = true;
+boolean hasUmbrella = false;
+
+raining && !hasUmbrella`, 'true', 'raining is true and !hasUmbrella is true.'),
+      compoundBoolean(6, `int level = 5;
+int lives = 0;
+
+level > 3 && lives > 0`, 'false', 'The lives > 0 comparison is false.'),
+      compoundBoolean(7, `int temp = 68;
+boolean fanOn = true;
+
+temp > 80 || fanOn`, 'true', 'fanOn is true, so the || expression is true.'),
+      compoundBoolean(8, `int a = 2;
+int b = 8;
+
+!(a < b)`, 'false', 'a < b is true, and !true is false.'),
+      compoundBoolean(9, `int n = 12;
+
+n % 3 == 0 && n % 4 == 0`, 'true', '12 is divisible by both 3 and 4.'),
+      compoundBoolean(10, `int n = 14;
+
+n % 3 == 0 || n % 5 == 0`, 'false', '14 is divisible by neither 3 nor 5.'),
+      compoundBoolean(11, `boolean loggedIn = true;
+boolean locked = true;
+
+loggedIn && !locked`, 'false', '!locked is false.'),
+      compoundBoolean(12, `int points = 49;
+boolean bonus = true;
+
+points >= 50 || bonus`, 'true', 'bonus is true, so the || expression is true.'),
     ],
   },
   {
@@ -387,86 +533,66 @@ x > 5 || y < 3`,
     title: 'Short-Circuit Evaluation',
     lockType: 'short-circuit',
     bank: [
-      {
-        id: 'short-circuit-1',
-        lockType: 'short-circuit',
-        title: 'Short-Circuit Evaluation',
-        category: 'Short-circuit logic',
-        prompt: 'Will the method call run?',
-        code: `int total = 0;
+      shortCircuit(1, 'Will the right side of the && expression be evaluated?', `int total = 0;
 
 if (total != 0 && 100 / total > 5) {
     System.out.println("large");
-}`,
-        choices: [
-          { id: 'a', label: 'Yes, because both sides of && always run', isCorrect: false },
-          { id: 'b', label: 'No, because the left side is false', isCorrect: true },
-          { id: 'c', label: 'Yes, and it prints large', isCorrect: false },
-          { id: 'd', label: 'No, because && checks the right side first', isCorrect: false },
-        ],
-        explanation: 'For &&, Java skips the right side when the left side is false.',
-        hints: ['For &&, one false value is enough to make the result false.', 'Java evaluates left to right.'],
-      },
-      {
-        id: 'short-circuit-2',
-        lockType: 'short-circuit',
-        title: 'Short-Circuit Evaluation',
-        category: 'Short-circuit logic',
-        prompt: 'Will the second comparison be evaluated?',
-        code: `int count = 12;
+}`, 'No, because the left side is false', ['Yes, because both sides of && always run', 'Yes, and it prints large', 'No, because && checks the right side first'], 'For &&, Java skips the right side when the left side is false.'),
+      shortCircuit(2, 'Will the right side of the || expression be evaluated?', `int count = 12;
 
 if (count > 10 || count / 0 == 3) {
     System.out.println("safe");
-}`,
-        choices: [
-          { id: 'a', label: 'Yes, because || always checks both sides', isCorrect: false },
-          { id: 'b', label: 'No, because the left side is true', isCorrect: true },
-          { id: 'c', label: 'Yes, and it causes division by zero', isCorrect: false },
-          { id: 'd', label: 'No, because Java evaluates right to left', isCorrect: false },
-        ],
-        explanation: 'For ||, Java skips the right side when the left side is already true.',
-        hints: ['With ||, one true value is enough.', 'Java evaluates the left side first.'],
-      },
-      {
-        id: 'short-circuit-3',
-        lockType: 'short-circuit',
-        title: 'Short-Circuit Evaluation',
-        category: 'Short-circuit logic',
-        prompt: 'Will the right side of the && expression be evaluated?',
-        code: `int number = 8;
+}`, 'No, because the left side is true', ['Yes, because || always checks both sides', 'Yes, and it causes division by zero', 'No, because Java evaluates right to left'], 'For ||, Java skips the right side when the left side is true.'),
+      shortCircuit(3, 'Will the right side of the && expression be evaluated?', `int number = 8;
 
 if (number > 0 && number % 2 == 0) {
     System.out.println("positive even");
-}`,
-        choices: [
-          { id: 'a', label: 'Yes, because the left side is true', isCorrect: true },
-          { id: 'b', label: 'No, because && always skips the right side', isCorrect: false },
-          { id: 'c', label: 'No, because number is even', isCorrect: false },
-          { id: 'd', label: 'Yes, because Java evaluates right to left', isCorrect: false },
-        ],
-        explanation: 'For &&, Java evaluates the right side only if the left side is true.',
-        hints: ['Check number > 0 first.', 'A true left side is not enough to decide an && expression.'],
-      },
-      {
-        id: 'short-circuit-4',
-        lockType: 'short-circuit',
-        title: 'Short-Circuit Evaluation',
-        category: 'Short-circuit logic',
-        prompt: 'Will the right side of the || expression be evaluated?',
-        code: `int tries = 1;
+}`, 'Yes, because the left side is true', ['No, because && always skips the right side', 'No, because number is even', 'Yes, because Java evaluates right to left'], '&& must check the right side when the left side is true.'),
+      shortCircuit(4, 'Will the right side of the || expression be evaluated?', `int tries = 1;
 
 if (tries > 3 || tries == 1) {
     System.out.println("check");
-}`,
-        choices: [
-          { id: 'a', label: 'Yes, because the left side is false', isCorrect: true },
-          { id: 'b', label: 'No, because || always skips the right side', isCorrect: false },
-          { id: 'c', label: 'No, because tries is 1', isCorrect: false },
-          { id: 'd', label: 'Yes, because both sides of || must be true', isCorrect: false },
-        ],
-        explanation: 'The left side of || is false, so Java must evaluate the right side to know the final result.',
-        hints: ['With ||, Java can stop only after finding true.', 'tries > 3 is false.'],
-      },
+}`, 'Yes, because the left side is false', ['No, because || always skips the right side', 'No, because tries is 1', 'Yes, because both sides of || must be true'], '|| must check the right side when the left side is false.'),
+      shortCircuit(5, 'Will the method call happen?', `String word = null;
+
+if (word != null && word.length() > 3) {
+    System.out.println("long");
+}`, 'No, because word != null is false', ['Yes, because length is always checked', 'Yes, and it prints long', 'No, because && evaluates right to left'], 'The null check fails, so && short-circuits.'),
+      shortCircuit(6, 'Will the method call happen?', `String word = "java";
+
+if (word == null || word.length() == 4) {
+    System.out.println("match");
+}`, 'Yes, because word == null is false', ['No, because || always skips methods', 'No, because word is not null', 'Yes, because Java evaluates right to left'], 'The left side of || is false, so Java checks length().'),
+      shortCircuit(7, 'Will the right side be evaluated?', `int x = -2;
+
+if (x > 0 && x * x > 10) {
+    System.out.println("large");
+}`, 'No, because x > 0 is false', ['Yes, because multiplication is safe', 'Yes, because && needs both sides', 'No, because x * x is false'], 'The left side of && is false.'),
+      shortCircuit(8, 'Will the right side be evaluated?', `boolean ready = true;
+
+if (ready || getBackupReady()) {
+    System.out.println("go");
+}`, 'No, because ready is true', ['Yes, because methods always run', 'Yes, because || needs both sides', 'No, because ready is false'], 'A true left side is enough for ||.'),
+      shortCircuit(9, 'Will the right side be evaluated?', `boolean ready = false;
+
+if (ready || getBackupReady()) {
+    System.out.println("go");
+}`, 'Yes, because ready is false', ['No, because || always skips the right side', 'No, because ready is false', 'Yes, because Java evaluates right to left'], 'A false left side is not enough to decide ||.'),
+      shortCircuit(10, 'Will the right side be evaluated?', `boolean allowed = true;
+
+if (allowed && hasTicket()) {
+    System.out.println("enter");
+}`, 'Yes, because allowed is true', ['No, because && always skips methods', 'No, because allowed is true', 'Yes, because || short-circuits'], 'A true left side requires && to evaluate the right side.'),
+      shortCircuit(11, 'Will the division happen?', `int divisor = 0;
+
+if (divisor == 0 || 10 / divisor > 1) {
+    System.out.println("skip division");
+}`, 'No, because divisor == 0 is true', ['Yes, because division is on the right', 'Yes, and it throws an error', 'No, because || checks the right side first'], 'The true left side of || prevents the division.'),
+      shortCircuit(12, 'Will the division happen?', `int divisor = 5;
+
+if (divisor != 0 && 10 / divisor > 1) {
+    System.out.println("safe division");
+}`, 'Yes, because divisor != 0 is true', ['No, because && skips division', 'No, because divisor is 5', 'Yes, because Java evaluates right to left'], 'The true left side lets && evaluate the division.'),
     ],
   },
   {
@@ -475,78 +601,44 @@ if (tries > 3 || tries == 1) {
     title: 'Arrange if / else-if / else',
     lockType: 'arrange-branches',
     bank: [
-      {
-        id: 'arrange-branches-1',
-        lockType: 'arrange-branches',
-        title: 'Arrange if / else-if / else',
-        category: 'Code ordering',
-        prompt: 'Which order creates a valid if / else-if / else chain?',
-        code: `A. else { ... }
+      arrangeBranches(1, 'Which order creates a valid if / else-if / else chain?', `A. else { ... }
 B. if (level > 10) { ... }
-C. else if (level > 5) { ... }`,
-        choices: [
-          { id: 'a', label: 'B, C, A', isCorrect: true },
-          { id: 'b', label: 'A, B, C', isCorrect: false },
-          { id: 'c', label: 'C, B, A', isCorrect: false },
-          { id: 'd', label: 'B, A, C', isCorrect: false },
-        ],
-        explanation: 'An if starts the chain, zero or more else-if blocks may follow, and else comes last.',
-        hints: ['An else cannot start a chain.', 'The else block must be last.'],
-      },
-      {
-        id: 'arrange-branches-2',
-        lockType: 'arrange-branches',
-        title: 'Arrange if / else-if / else',
-        category: 'Code ordering',
-        prompt: 'Which order creates a valid chain for assigning a letter grade?',
-        code: `A. else if (grade >= 80) { letter = "B"; }
+C. else if (level > 5) { ... }`, 'B, C, A', ['A, B, C', 'C, B, A', 'B, A, C'], 'The if starts the chain, else-if follows, and else is last.'),
+      arrangeBranches(2, 'Which order creates a valid chain for assigning a letter grade?', `A. else if (grade >= 80) { letter = "B"; }
 B. else { letter = "C"; }
-C. if (grade >= 90) { letter = "A"; }`,
-        choices: [
-          { id: 'a', label: 'C, A, B', isCorrect: true },
-          { id: 'b', label: 'A, C, B', isCorrect: false },
-          { id: 'c', label: 'B, A, C', isCorrect: false },
-          { id: 'd', label: 'C, B, A', isCorrect: false },
-        ],
-        explanation: 'The if block must come first, else-if blocks follow, and the else block comes last.',
-        hints: ['Find the line that starts with if.', 'The plain else must be last.'],
-      },
-      {
-        id: 'arrange-branches-3',
-        lockType: 'arrange-branches',
-        title: 'Arrange if / else-if / else',
-        category: 'Code ordering',
-        prompt: 'Which order creates a valid chain for choosing a shipping price?',
-        code: `A. else if (weight < 10) { cost = 8; }
+C. if (grade >= 90) { letter = "A"; }`, 'C, A, B', ['A, C, B', 'B, A, C', 'C, B, A'], 'The if block must come before else-if and else.'),
+      arrangeBranches(3, 'Which order creates a valid chain for choosing a shipping price?', `A. else if (weight < 10) { cost = 8; }
 B. if (weight < 2) { cost = 3; }
-C. else { cost = 15; }`,
-        choices: [
-          { id: 'a', label: 'B, A, C', isCorrect: true },
-          { id: 'b', label: 'A, B, C', isCorrect: false },
-          { id: 'c', label: 'C, B, A', isCorrect: false },
-          { id: 'd', label: 'B, C, A', isCorrect: false },
-        ],
-        explanation: 'A valid chain starts with if, continues with else-if, and ends with else.',
-        hints: ['Find the only line that starts with if.', 'The catch-all else belongs at the end.'],
-      },
-      {
-        id: 'arrange-branches-4',
-        lockType: 'arrange-branches',
-        title: 'Arrange if / else-if / else',
-        category: 'Code ordering',
-        prompt: 'Which order creates a valid chain for assigning a message?',
-        code: `A. if (health <= 0) { message = "done"; }
+C. else { cost = 15; }`, 'B, A, C', ['A, B, C', 'C, B, A', 'B, C, A'], 'Start with if, then else-if, then else.'),
+      arrangeBranches(4, 'Which order creates a valid chain for assigning a message?', `A. if (health <= 0) { message = "done"; }
 B. else { message = "safe"; }
-C. else if (health < 20) { message = "danger"; }`,
-        choices: [
-          { id: 'a', label: 'A, C, B', isCorrect: true },
-          { id: 'b', label: 'C, A, B', isCorrect: false },
-          { id: 'c', label: 'B, A, C', isCorrect: false },
-          { id: 'd', label: 'A, B, C', isCorrect: false },
-        ],
-        explanation: 'The if starts the chain, the else-if checks an additional condition, and the else comes last.',
-        hints: ['An else-if cannot appear before an if.', 'A plain else cannot come before an else-if.'],
-      },
+C. else if (health < 20) { message = "danger"; }`, 'A, C, B', ['C, A, B', 'B, A, C', 'A, B, C'], 'A plain else must come after any else-if.'),
+      arrangeBranches(5, 'Which order creates a valid chain for checking a password result?', `A. else if (attempts < 3) { status = "retry"; }
+B. else { status = "locked"; }
+C. if (correct) { status = "open"; }`, 'C, A, B', ['A, C, B', 'B, C, A', 'C, B, A'], 'The condition that starts with if must come first.'),
+      arrangeBranches(6, 'Which order creates a valid chain for classifying a number?', `A. else { kind = "negative"; }
+B. else if (n == 0) { kind = "zero"; }
+C. if (n > 0) { kind = "positive"; }`, 'C, B, A', ['B, C, A', 'A, B, C', 'C, A, B'], 'if, else-if, else is the valid order.'),
+      arrangeBranches(7, 'Which order creates a valid chain for assigning a speed label?', `A. if (speed > 70) { label = "fast"; }
+B. else if (speed > 30) { label = "steady"; }
+C. else { label = "slow"; }`, 'A, B, C', ['B, A, C', 'C, A, B', 'A, C, B'], 'This one is already in if, else-if, else order.'),
+      arrangeBranches(8, 'Which order creates a valid chain for checking inventory?', `A. else if (count < 5) { status = "low"; }
+B. if (count == 0) { status = "empty"; }
+C. else { status = "stocked"; }`, 'B, A, C', ['A, B, C', 'B, C, A', 'C, B, A'], 'The if block starts the chain.'),
+      arrangeBranches(9, 'Which order creates a valid chain for assigning a medal?', `A. else if (place == 2) { medal = "silver"; }
+B. else if (place == 3) { medal = "bronze"; }
+C. if (place == 1) { medal = "gold"; }
+D. else { medal = "none"; }`, 'C, A, B, D', ['A, B, C, D', 'C, D, A, B', 'D, C, A, B'], 'Multiple else-if blocks can appear before the final else.'),
+      arrangeBranches(10, 'Which order creates a valid chain for checking a game state?', `A. else { state = "play"; }
+B. if (won) { state = "win"; }
+C. else if (lost) { state = "lose"; }`, 'B, C, A', ['A, B, C', 'C, B, A', 'B, A, C'], 'The plain else goes last.'),
+      arrangeBranches(11, 'Which order creates a valid chain for setting a fee?', `A. else if (age < 18) { fee = 5; }
+B. if (age < 5) { fee = 0; }
+C. else if (age < 65) { fee = 10; }
+D. else { fee = 6; }`, 'B, A, C, D', ['A, B, C, D', 'B, D, A, C', 'D, B, A, C'], 'The chain starts with if and ends with else.'),
+      arrangeBranches(12, 'Which order creates a valid chain for setting a warning?', `A. if (battery < 10) { warning = "critical"; }
+B. else { warning = "none"; }
+C. else if (battery < 30) { warning = "low"; }`, 'A, C, B', ['C, A, B', 'A, B, C', 'B, A, C'], 'else-if must come before else.'),
     ],
   },
   {
@@ -555,13 +647,7 @@ C. else if (health < 20) { message = "danger"; }`,
     title: 'Nested If Trace',
     lockType: 'nested-if',
     bank: [
-      {
-        id: 'nested-if-1',
-        lockType: 'nested-if',
-        title: 'Nested If Trace',
-        category: 'Nested conditionals',
-        prompt: 'What is printed by the nested conditional?',
-        code: `int x = 8;
+      nestedIf(1, `int x = 8;
 int y = 3;
 
 if (x > 5) {
@@ -572,23 +658,8 @@ if (x > 5) {
     }
 } else {
     System.out.println("gamma");
-}`,
-        choices: [
-          { id: 'a', label: 'alpha', isCorrect: false },
-          { id: 'b', label: 'beta', isCorrect: true },
-          { id: 'c', label: 'gamma', isCorrect: false },
-          { id: 'd', label: 'Nothing is printed', isCorrect: false },
-        ],
-        explanation: 'The outer condition is true, then the inner condition is false, so beta is printed.',
-        hints: ['Trace the outer if first.', 'Only enter the inner if because x > 5 is true.'],
-      },
-      {
-        id: 'nested-if-2',
-        lockType: 'nested-if',
-        title: 'Nested If Trace',
-        category: 'Nested conditionals',
-        prompt: 'What is printed by the nested conditional?',
-        code: `int speed = 45;
+}`, 'beta', ['alpha', 'gamma', 'Nothing is printed'], 'The outer condition is true, then the inner condition is false.'),
+      nestedIf(2, `int speed = 45;
 boolean schoolZone = true;
 
 if (schoolZone) {
@@ -599,23 +670,8 @@ if (schoolZone) {
     }
 } else {
     System.out.println("normal road");
-}`,
-        choices: [
-          { id: 'a', label: 'slow down', isCorrect: true },
-          { id: 'b', label: 'ok', isCorrect: false },
-          { id: 'c', label: 'normal road', isCorrect: false },
-          { id: 'd', label: 'schoolZone', isCorrect: false },
-        ],
-        explanation: 'schoolZone is true, so the inner if is checked. Since 45 > 25, slow down is printed.',
-        hints: ['The outer condition is a boolean variable.', 'After entering the outer if, compare speed to 25.'],
-      },
-      {
-        id: 'nested-if-3',
-        lockType: 'nested-if',
-        title: 'Nested If Trace',
-        category: 'Nested conditionals',
-        prompt: 'What is printed by the nested conditional?',
-        code: `int coins = 1;
+}`, 'slow down', ['ok', 'normal road', 'schoolZone'], 'schoolZone is true and speed > 25 is true.'),
+      nestedIf(3, `int coins = 1;
 boolean bonus = true;
 
 if (coins >= 5) {
@@ -626,23 +682,8 @@ if (coins >= 5) {
     }
 } else {
     System.out.println("no prize");
-}`,
-        choices: [
-          { id: 'a', label: 'double prize', isCorrect: false },
-          { id: 'b', label: 'single prize', isCorrect: false },
-          { id: 'c', label: 'no prize', isCorrect: true },
-          { id: 'd', label: 'bonus', isCorrect: false },
-        ],
-        explanation: 'coins >= 5 is false, so Java skips the nested if and prints no prize.',
-        hints: ['Start with the outer condition.', 'The inner condition is checked only if coins >= 5 is true.'],
-      },
-      {
-        id: 'nested-if-4',
-        lockType: 'nested-if',
-        title: 'Nested If Trace',
-        category: 'Nested conditionals',
-        prompt: 'What is printed by the nested conditional?',
-        code: `int rows = 3;
+}`, 'no prize', ['double prize', 'single prize', 'bonus'], 'coins >= 5 is false, so the outer else runs.'),
+      nestedIf(4, `int rows = 3;
 int cols = 3;
 
 if (rows == cols) {
@@ -653,16 +694,103 @@ if (rows == cols) {
     }
 } else {
     System.out.println("rectangle");
-}`,
-        choices: [
-          { id: 'a', label: 'large square', isCorrect: false },
-          { id: 'b', label: 'small square', isCorrect: true },
-          { id: 'c', label: 'rectangle', isCorrect: false },
-          { id: 'd', label: '3', isCorrect: false },
-        ],
-        explanation: 'rows == cols is true, then rows > 5 is false, so small square is printed.',
-        hints: ['First decide whether rows equals cols.', 'Then check the nested condition.'],
-      },
+}`, 'small square', ['large square', 'rectangle', '3'], 'rows == cols is true, then rows > 5 is false.'),
+      nestedIf(5, `int age = 20;
+boolean hasId = false;
+
+if (age >= 18) {
+    if (hasId) {
+        System.out.println("enter");
+    } else {
+        System.out.println("show ID");
+    }
+} else {
+    System.out.println("too young");
+}`, 'show ID', ['enter', 'too young', 'hasId'], 'The outer condition is true, but hasId is false.'),
+      nestedIf(6, `int a = 2;
+int b = 9;
+
+if (a > b) {
+    if (a > 10) {
+        System.out.println("large a");
+    } else {
+        System.out.println("small a");
+    }
+} else {
+    System.out.println("b wins");
+}`, 'b wins', ['large a', 'small a', 'Nothing is printed'], 'a > b is false.'),
+      nestedIf(7, `boolean online = true;
+int messages = 0;
+
+if (online) {
+    if (messages > 0) {
+        System.out.println("reply");
+    } else {
+        System.out.println("wait");
+    }
+} else {
+    System.out.println("offline");
+}`, 'wait', ['reply', 'offline', '0'], 'online is true, then messages > 0 is false.'),
+      nestedIf(8, `int score = 98;
+boolean late = false;
+
+if (score >= 90) {
+    if (!late) {
+        System.out.println("honors");
+    } else {
+        System.out.println("check");
+    }
+} else {
+    System.out.println("regular");
+}`, 'honors', ['check', 'regular', 'false'], 'score >= 90 is true and !late is true.'),
+      nestedIf(9, `int temp = 30;
+boolean windy = true;
+
+if (temp < 32) {
+    if (windy) {
+        System.out.println("freezing wind");
+    } else {
+        System.out.println("freezing");
+    }
+} else {
+    System.out.println("above freezing");
+}`, 'freezing wind', ['freezing', 'above freezing', 'windy'], 'Both temp < 32 and windy are true.'),
+      nestedIf(10, `int level = 4;
+int key = 1;
+
+if (level > 5) {
+    if (key == 1) {
+        System.out.println("unlock");
+    } else {
+        System.out.println("need key");
+    }
+} else {
+    System.out.println("need level");
+}`, 'need level', ['unlock', 'need key', '1'], 'level > 5 is false, so the outer else runs.'),
+      nestedIf(11, `boolean paid = true;
+boolean expired = true;
+
+if (paid) {
+    if (!expired) {
+        System.out.println("active");
+    } else {
+        System.out.println("renew");
+    }
+} else {
+    System.out.println("pay");
+}`, 'renew', ['active', 'pay', 'true'], 'paid is true, but !expired is false.'),
+      nestedIf(12, `int width = 5;
+int height = 7;
+
+if (width == height) {
+    if (width > 5) {
+        System.out.println("big square");
+    } else {
+        System.out.println("small square");
+    }
+} else {
+    System.out.println("rectangle");
+}`, 'rectangle', ['big square', 'small square', '7'], 'width == height is false.'),
     ],
   },
   {
@@ -671,70 +799,18 @@ if (rows == cols) {
     title: "DeMorgan's Law",
     lockType: 'demorgan',
     bank: [
-      {
-        id: 'demorgan-1',
-        lockType: 'demorgan',
-        title: "DeMorgan's Law",
-        category: 'Equivalent expressions',
-        prompt: 'Which expression is equivalent?',
-        code: `!(x > 10 && y < 5)`,
-        choices: [
-          { id: 'a', label: 'x <= 10 || y >= 5', isCorrect: true },
-          { id: 'b', label: 'x <= 10 && y >= 5', isCorrect: false },
-          { id: 'c', label: 'x > 10 || y < 5', isCorrect: false },
-          { id: 'd', label: 'x < 10 || y > 5', isCorrect: false },
-        ],
-        explanation: 'Negating an && expression changes it to || and negates both comparisons.',
-        hints: ['DeMorgan changes && to ||.', 'Negate each comparison carefully.'],
-      },
-      {
-        id: 'demorgan-2',
-        lockType: 'demorgan',
-        title: "DeMorgan's Law",
-        category: 'Equivalent expressions',
-        prompt: 'Which expression is equivalent?',
-        code: `!(isRaining || temperature < 32)`,
-        choices: [
-          { id: 'a', label: '!isRaining && temperature >= 32', isCorrect: true },
-          { id: 'b', label: '!isRaining || temperature >= 32', isCorrect: false },
-          { id: 'c', label: 'isRaining && temperature < 32', isCorrect: false },
-          { id: 'd', label: '!isRaining && temperature < 32', isCorrect: false },
-        ],
-        explanation: 'Negating an || expression changes it to && and negates both parts.',
-        hints: ['DeMorgan changes || to &&.', 'The opposite of temperature < 32 is temperature >= 32.'],
-      },
-      {
-        id: 'demorgan-3',
-        lockType: 'demorgan',
-        title: "DeMorgan's Law",
-        category: 'Equivalent expressions',
-        prompt: 'Which expression is equivalent?',
-        code: `!(score >= 60 && submitted)`,
-        choices: [
-          { id: 'a', label: 'score < 60 || !submitted', isCorrect: true },
-          { id: 'b', label: 'score < 60 && !submitted', isCorrect: false },
-          { id: 'c', label: 'score >= 60 || submitted', isCorrect: false },
-          { id: 'd', label: 'score <= 60 || !submitted', isCorrect: false },
-        ],
-        explanation: 'Negating && changes it to ||, score >= 60 becomes score < 60, and submitted becomes !submitted.',
-        hints: ['Flip && to ||.', 'The opposite of >= is <.'],
-      },
-      {
-        id: 'demorgan-4',
-        lockType: 'demorgan',
-        title: "DeMorgan's Law",
-        category: 'Equivalent expressions',
-        prompt: 'Which expression is equivalent?',
-        code: `!(hasTicket || age >= 18)`,
-        choices: [
-          { id: 'a', label: '!hasTicket && age < 18', isCorrect: true },
-          { id: 'b', label: '!hasTicket || age < 18', isCorrect: false },
-          { id: 'c', label: 'hasTicket && age >= 18', isCorrect: false },
-          { id: 'd', label: '!hasTicket && age <= 18', isCorrect: false },
-        ],
-        explanation: 'Negating || changes it to &&, hasTicket becomes !hasTicket, and age >= 18 becomes age < 18.',
-        hints: ['Flip || to &&.', 'The opposite of >= is <.'],
-      },
+      demorgan(1, `!(x > 10 && y < 5)`, 'x <= 10 || y >= 5', ['x <= 10 && y >= 5', 'x > 10 || y < 5', 'x < 10 || y > 5'], 'Negating && changes it to || and negates both comparisons.'),
+      demorgan(2, `!(isRaining || temperature < 32)`, '!isRaining && temperature >= 32', ['!isRaining || temperature >= 32', 'isRaining && temperature < 32', '!isRaining && temperature < 32'], 'Negating || changes it to && and negates both parts.'),
+      demorgan(3, `!(score >= 60 && submitted)`, 'score < 60 || !submitted', ['score < 60 && !submitted', 'score >= 60 || submitted', 'score <= 60 || !submitted'], 'The opposite of >= is <, and submitted becomes !submitted.'),
+      demorgan(4, `!(hasTicket || age >= 18)`, '!hasTicket && age < 18', ['!hasTicket || age < 18', 'hasTicket && age >= 18', '!hasTicket && age <= 18'], 'The opposite of age >= 18 is age < 18.'),
+      demorgan(5, `!(a == b && ready)`, 'a != b || !ready', ['a != b && !ready', 'a == b || ready', 'a < b || !ready'], '== negates to !=, and && changes to ||.'),
+      demorgan(6, `!(x < 0 || y > 100)`, 'x >= 0 && y <= 100', ['x >= 0 || y <= 100', 'x < 0 && y > 100', 'x > 0 && y < 100'], '< negates to >=, and > negates to <=.'),
+      demorgan(7, `!(loggedIn && !locked)`, '!loggedIn || locked', ['!loggedIn && locked', 'loggedIn || !locked', '!loggedIn || !locked'], '!(!locked) becomes locked.'),
+      demorgan(8, `!(n % 2 == 0 || n < 10)`, 'n % 2 != 0 && n >= 10', ['n % 2 != 0 || n >= 10', 'n % 2 == 0 && n < 10', 'n % 2 != 0 && n > 10'], '== negates to != and < negates to >=.'),
+      demorgan(9, `!(finished || attempts >= 3)`, '!finished && attempts < 3', ['!finished || attempts < 3', 'finished && attempts >= 3', '!finished && attempts <= 3'], '|| changes to &&, and >= changes to <.'),
+      demorgan(10, `!(count != 0 && valid)`, 'count == 0 || !valid', ['count == 0 && !valid', 'count != 0 || valid', 'count < 0 || !valid'], '!= negates to ==.'),
+      demorgan(11, `!(cold || windy)`, '!cold && !windy', ['!cold || !windy', 'cold && windy', '!cold && windy'], 'Both boolean variables are negated and || becomes &&.'),
+      demorgan(12, `!(age <= 12 && member)`, 'age > 12 || !member', ['age > 12 && !member', 'age >= 12 || !member', 'age <= 12 || member'], '<= negates to >, and && changes to ||.'),
     ],
   },
   {
@@ -743,90 +819,74 @@ if (rows == cols) {
     title: 'Find the Bug',
     lockType: 'find-bug',
     bank: [
-      {
-        id: 'find-bug-1',
-        lockType: 'find-bug',
-        title: 'Find the Bug',
-        category: 'Debugging conditionals',
-        prompt: 'Which fix makes the code compare the values correctly?',
-        code: `int guess = 7;
+      findBug(1, 'Which fix makes the code compare the values correctly?', `int guess = 7;
 int answer = 7;
 
 if (guess = answer) {
     System.out.println("correct");
-}`,
-        choices: [
-          { id: 'a', label: 'Change = to ==', isCorrect: true },
-          { id: 'b', label: 'Change = to !=', isCorrect: false },
-          { id: 'c', label: 'Remove the parentheses', isCorrect: false },
-          { id: 'd', label: 'Change int to double', isCorrect: false },
-        ],
-        explanation: 'A comparison uses ==. A single = is assignment and does not create a boolean expression for ints.',
-        hints: ['Look at the operator inside the condition.', 'AP CSA uses == to compare primitive values.'],
-      },
-      {
-        id: 'find-bug-2',
-        lockType: 'find-bug',
-        title: 'Find the Bug',
-        category: 'Debugging conditionals',
-        prompt: 'Which fix correctly compares the String value?',
-        code: `String mode = "easy";
+}`, 'Change = to ==', ['Change = to !=', 'Remove the parentheses', 'Change int to double'], 'A comparison uses ==, not a single assignment operator.'),
+      findBug(2, 'Which fix correctly compares the String value?', `String mode = "easy";
 
 if (mode == "easy") {
     System.out.println("start");
-}`,
-        choices: [
-          { id: 'a', label: 'Use mode.equals("easy")', isCorrect: true },
-          { id: 'b', label: 'Use mode = "easy"', isCorrect: false },
-          { id: 'c', label: 'Use mode != "easy"', isCorrect: false },
-          { id: 'd', label: 'Remove the quotes around easy', isCorrect: false },
-        ],
-        explanation: 'In AP CSA, String values should be compared with .equals rather than ==.',
-        hints: ['String comparison is different from int comparison.', 'Use a method call to compare String contents.'],
-      },
-      {
-        id: 'find-bug-3',
-        lockType: 'find-bug',
-        title: 'Find the Bug',
-        category: 'Debugging conditionals',
-        prompt: 'Which fix makes the condition test the intended range?',
-        code: `int percent = 87;
+}`, 'Use mode.equals("easy")', ['Use mode = "easy"', 'Use mode != "easy"', 'Remove the quotes around easy'], 'String values should be compared with .equals in AP CSA.'),
+      findBug(3, 'Which fix makes the condition test the intended range?', `int percent = 87;
 
 if (80 <= percent <= 89) {
     System.out.println("B");
-}`,
-        choices: [
-          { id: 'a', label: 'Use percent >= 80 && percent <= 89', isCorrect: true },
-          { id: 'b', label: 'Use percent >= 80 || percent <= 89', isCorrect: false },
-          { id: 'c', label: 'Use 80 >= percent && 89 <= percent', isCorrect: false },
-          { id: 'd', label: 'Use percent == 80 && percent == 89', isCorrect: false },
-        ],
-        explanation: 'Java does not support chained comparisons; use two comparisons joined by &&.',
-        hints: ['Break the range into two comparisons.', 'For a range, both boundaries must be true.'],
-      },
-      {
-        id: 'find-bug-4',
-        lockType: 'find-bug',
-        title: 'Find the Bug',
-        category: 'Debugging conditionals',
-        prompt: 'Which fix makes the else match the intended condition?',
-        code: `boolean loggedIn = true;
+}`, 'Use percent >= 80 && percent <= 89', ['Use percent >= 80 || percent <= 89', 'Use 80 >= percent && 89 <= percent', 'Use percent == 80 && percent == 89'], 'Java does not support chained comparisons.'),
+      findBug(4, 'Which fix makes the else match the intended condition?', `boolean loggedIn = true;
 boolean isAdmin = false;
 
 if (loggedIn)
     if (isAdmin)
         System.out.println("admin");
 else
-    System.out.println("guest");`,
-        choices: [
-          { id: 'a', label: 'Add braces around the outer if body', isCorrect: true },
-          { id: 'b', label: 'Change loggedIn to false', isCorrect: false },
-          { id: 'c', label: 'Replace else with else if', isCorrect: false },
-          { id: 'd', label: 'Change isAdmin to an int', isCorrect: false },
-        ],
-        explanation: 'Without braces, the else pairs with the nearest unmatched if, which is if (isAdmin).',
-        hints: ['Java matches else with the nearest unmatched if.', 'Braces make nested intent clear.'],
-      },
+    System.out.println("guest");`, 'Add braces around the outer if body', ['Change loggedIn to false', 'Replace else with else if', 'Change isAdmin to an int'], 'Without braces, else pairs with the nearest unmatched if.'),
+      findBug(5, 'Which fix checks whether n is even?', `int n = 12;
+
+if (n % 2 = 0) {
+    System.out.println("even");
+}`, 'Change = to ==', ['Change % to /', 'Change 0 to 1', 'Remove n % 2'], 'The result of n % 2 must be compared with ==.'),
+      findBug(6, 'Which fix makes the boolean condition valid?', `boolean ready = true;
+
+if (ready == true); {
+    System.out.println("go");
+}`, 'Remove the semicolon after the if condition', ['Change true to false', 'Use ready.equals(true)', 'Remove the braces'], 'The semicolon ends the if statement too early.'),
+      findBug(7, 'Which fix prevents the wrong branch from always running?', `int score = 92;
+
+if (score > 90) {
+    System.out.println("A");
+}
+if (score > 80) {
+    System.out.println("B");
+}`, 'Change the second if to else if', ['Change > 80 to > 100', 'Remove the first if', 'Change score to a String'], 'An else-if chain prevents both branches from running.'),
+      findBug(8, 'Which fix checks that a number is outside the range 1 through 10?', `int n = 12;
+
+if (n < 1 && n > 10) {
+    System.out.println("outside");
+}`, 'Change && to ||', ['Change < to <= only', 'Change > to >= only', 'Change n to boolean'], 'A number cannot be less than 1 and greater than 10 at the same time.'),
+      findBug(9, 'Which fix checks the negative case correctly?', `boolean absent = false;
+
+if (!absent == false) {
+    System.out.println("present");
+}`, 'Use absent == false or !absent', ['Use absent = false', 'Use absent.equals(false)', 'Remove the if'], 'The condition is unnecessarily confusing; !absent directly checks present.'),
+      findBug(10, 'Which fix makes the threshold check include 100?', `int score = 100;
+
+if (score > 100) {
+    System.out.println("perfect");
+}`, 'Change > to >=', ['Change > to <', 'Change 100 to 0', 'Use score.equals(100)'], 'A perfect score of exactly 100 should be included.'),
+      findBug(11, 'Which fix avoids integer assignment in a boolean condition?', `int value = 3;
+
+if (value = 3) {
+    System.out.println("match");
+}`, 'Change value = 3 to value == 3', ['Change int to boolean', 'Change 3 to true', 'Remove value'], 'An int assignment is not a boolean condition.'),
+      findBug(12, 'Which fix compares two String variables by content?', `String first = "AP";
+String second = "AP";
+
+if (first == second) {
+    System.out.println("same");
+}`, 'Use first.equals(second)', ['Use first = second', 'Use first != second', 'Use first.compareTo(second) > 0'], '.equals compares String contents.'),
     ],
   },
   {
@@ -835,13 +895,7 @@ else
     title: 'Final Boss',
     lockType: 'final-boss',
     bank: [
-      {
-        id: 'final-boss-1',
-        lockType: 'final-boss',
-        title: 'Final Boss',
-        category: 'Mixed conditional trace',
-        prompt: 'What is the final value of result?',
-        code: `int a = 6;
+      finalBoss(1, `int a = 6;
 int b = 4;
 String result = "";
 
@@ -851,23 +905,8 @@ if (a > b && b % 2 == 0) {
     result = "retry";
 } else {
     result = "reset";
-}`,
-        choices: [
-          { id: 'a', label: 'unlock', isCorrect: true },
-          { id: 'b', label: 'retry', isCorrect: false },
-          { id: 'c', label: 'reset', isCorrect: false },
-          { id: 'd', label: 'empty string', isCorrect: false },
-        ],
-        explanation: 'a > b is true and b is even, so the first branch sets result to unlock.',
-        hints: ['The first branch uses &&.', 'Check whether b % 2 equals 0.'],
-      },
-      {
-        id: 'final-boss-2',
-        lockType: 'final-boss',
-        title: 'Final Boss',
-        category: 'Mixed conditional trace',
-        prompt: 'What is the final value of result?',
-        code: `int energy = 4;
+}`, 'unlock', ['retry', 'reset', 'empty string'], 'a > b is true and b is even.'),
+      finalBoss(2, `int energy = 4;
 boolean hasKey = true;
 String result = "";
 
@@ -877,23 +916,8 @@ if (energy > 5 && hasKey) {
     result = "charge";
 } else {
     result = "locked";
-}`,
-        choices: [
-          { id: 'a', label: 'open', isCorrect: false },
-          { id: 'b', label: 'charge', isCorrect: true },
-          { id: 'c', label: 'locked', isCorrect: false },
-          { id: 'd', label: 'empty string', isCorrect: false },
-        ],
-        explanation: 'The first condition is false because energy > 5 is false. The else-if is true because energy > 2 is true.',
-        hints: ['Evaluate the first && expression before moving on.', 'The else-if uses ||, so one true part is enough.'],
-      },
-      {
-        id: 'final-boss-3',
-        lockType: 'final-boss',
-        title: 'Final Boss',
-        category: 'Mixed conditional trace',
-        prompt: 'What is the final value of result?',
-        code: `int score = 59;
+}`, 'charge', ['open', 'locked', 'empty string'], 'The first condition is false, but the else-if is true.'),
+      finalBoss(3, `int score = 59;
 boolean late = false;
 String result = "";
 
@@ -903,23 +927,8 @@ if (score >= 90 && !late) {
     result = "review";
 } else {
     result = "redo";
-}`,
-        choices: [
-          { id: 'a', label: 'honors', isCorrect: false },
-          { id: 'b', label: 'review', isCorrect: false },
-          { id: 'c', label: 'redo', isCorrect: true },
-          { id: 'd', label: 'empty string', isCorrect: false },
-        ],
-        explanation: 'The first condition is false and the else-if is also false, so result becomes redo.',
-        hints: ['Check score >= 60 carefully.', 'The else runs when both previous conditions are false.'],
-      },
-      {
-        id: 'final-boss-4',
-        lockType: 'final-boss',
-        title: 'Final Boss',
-        category: 'Mixed conditional trace',
-        prompt: 'What is the final value of result?',
-        code: `int x = 10;
+}`, 'redo', ['honors', 'review', 'empty string'], 'Both earlier conditions are false.'),
+      finalBoss(4, `int x = 10;
 int y = 10;
 String result = "";
 
@@ -929,16 +938,94 @@ if (x > y && y > 0) {
     result = "tie";
 } else {
     result = "behind";
-}`,
-        choices: [
-          { id: 'a', label: 'ahead', isCorrect: false },
-          { id: 'b', label: 'tie', isCorrect: true },
-          { id: 'c', label: 'behind', isCorrect: false },
-          { id: 'd', label: 'empty string', isCorrect: false },
-        ],
-        explanation: 'x > y is false, but x == y is true in the else-if, so result becomes tie.',
-        hints: ['The first branch uses &&.', 'The else-if uses ||, so one true part is enough.'],
-      },
+}`, 'tie', ['ahead', 'behind', 'empty string'], 'x == y is true in the else-if.'),
+      finalBoss(5, `int lives = 0;
+boolean shield = true;
+String result = "";
+
+if (lives > 0 && shield) {
+    result = "safe";
+} else if (lives > 0 || shield) {
+    result = "warning";
+} else {
+    result = "done";
+}`, 'warning', ['safe', 'done', 'empty string'], 'The first condition is false, but shield makes the else-if true.'),
+      finalBoss(6, `int temp = 101;
+boolean fan = false;
+String result = "";
+
+if (temp > 100 && !fan) {
+    result = "alert";
+} else if (temp > 80 || fan) {
+    result = "warm";
+} else {
+    result = "normal";
+}`, 'alert', ['warm', 'normal', 'empty string'], 'temp > 100 and !fan are both true.'),
+      finalBoss(7, `int coins = 3;
+int cost = 5;
+String result = "";
+
+if (coins >= cost && cost > 0) {
+    result = "buy";
+} else if (coins == 0 || cost <= 0) {
+    result = "error";
+} else {
+    result = "save";
+}`, 'save', ['buy', 'error', 'empty string'], 'The first two branches are false, so else runs.'),
+      finalBoss(8, `int grade = 88;
+boolean retake = true;
+String result = "";
+
+if (grade >= 90 && !retake) {
+    result = "A";
+} else if (grade >= 80 && retake) {
+    result = "review";
+} else {
+    result = "study";
+}`, 'review', ['A', 'study', 'empty string'], 'grade >= 80 and retake are both true.'),
+      finalBoss(9, `int row = 4;
+int col = 9;
+String result = "";
+
+if (row == col && row > 5) {
+    result = "large square";
+} else if (row == col || col > 8) {
+    result = "special";
+} else {
+    result = "plain";
+}`, 'special', ['large square', 'plain', 'empty string'], 'col > 8 makes the else-if true.'),
+      finalBoss(10, `int attempts = 4;
+boolean locked = true;
+String result = "";
+
+if (attempts < 3 && !locked) {
+    result = "try";
+} else if (attempts >= 3 && locked) {
+    result = "wait";
+} else {
+    result = "reset";
+}`, 'wait', ['try', 'reset', 'empty string'], 'attempts >= 3 and locked are both true.'),
+      finalBoss(11, `int n = 15;
+String result = "";
+
+if (n % 2 == 0 && n % 3 == 0) {
+    result = "six";
+} else if (n % 3 == 0 || n % 5 == 0) {
+    result = "match";
+} else {
+    result = "none";
+}`, 'match', ['six', 'none', 'empty string'], '15 is divisible by 3 and 5, so the else-if runs.'),
+      finalBoss(12, `boolean present = false;
+boolean excused = false;
+String result = "";
+
+if (present && !excused) {
+    result = "here";
+} else if (!present && excused) {
+    result = "excused";
+} else {
+    result = "absent";
+}`, 'absent', ['here', 'excused', 'empty string'], 'present is false and excused is false, so else runs.'),
     ],
   },
 ];
