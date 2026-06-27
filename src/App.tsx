@@ -1,4 +1,4 @@
-import { KeyRound, Play, RotateCcw, ShieldCheck, UsersRound } from 'lucide-react';
+import { CheckCircle2, KeyRound, LockKeyhole, Play, RotateCcw, ShieldCheck, UsersRound, XCircle } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { generateRoom } from './escape-room/roomEngine';
 import { clearSavedRoom, loadSavedRoom, saveRoom } from './escape-room/storage';
@@ -6,11 +6,18 @@ import type { RoomSession } from './types';
 
 const defaultNames = ['', ''];
 
+type Feedback = {
+  lockId: string;
+  kind: 'correct' | 'incorrect';
+  message: string;
+} | null;
+
 function App() {
   const [classCode, setClassCode] = useState('Conditionals-P4');
   const [studentNames, setStudentNames] = useState(defaultNames);
   const [room, setRoom] = useState<RoomSession | null>(null);
   const [savedRoom, setSavedRoom] = useState<RoomSession | null>(null);
+  const [feedback, setFeedback] = useState<Feedback>(null);
 
   useEffect(() => {
     setSavedRoom(loadSavedRoom());
@@ -29,6 +36,7 @@ function App() {
     saveRoom(nextRoom);
     setRoom(nextRoom);
     setSavedRoom(nextRoom);
+    setFeedback(null);
   };
 
   const resumeRoom = () => {
@@ -36,6 +44,7 @@ function App() {
       setRoom(savedRoom);
       setClassCode(savedRoom.classCode);
       setStudentNames([...savedRoom.studentNames, ...defaultNames].slice(0, 2));
+      setFeedback(null);
     }
   };
 
@@ -43,9 +52,74 @@ function App() {
     clearSavedRoom();
     setRoom(null);
     setSavedRoom(null);
+    setFeedback(null);
+  };
+
+  const answerCurrentLock = (choiceId: string) => {
+    if (!room) {
+      return;
+    }
+
+    const activeLockIndex = room.completedLocks.length;
+    const activeLock = room.locks[activeLockIndex];
+    const selectedChoice = activeLock?.choices.find((choice) => choice.id === choiceId);
+
+    if (!activeLock || !selectedChoice) {
+      return;
+    }
+
+    const nextAttemptsByLock = {
+      ...room.attemptsByLock,
+      [activeLock.lockId]: (room.attemptsByLock[activeLock.lockId] ?? 0) + 1,
+    };
+
+    if (!selectedChoice.isCorrect) {
+      const nextRoom = {
+        ...room,
+        attemptsByLock: nextAttemptsByLock,
+      };
+
+      saveRoom(nextRoom);
+      setRoom(nextRoom);
+      setSavedRoom(nextRoom);
+      setFeedback({
+        lockId: activeLock.lockId,
+        kind: 'incorrect',
+        message: 'Not quite. Trace the code again and try another answer.',
+      });
+      return;
+    }
+
+    const nextCompletedLocks = room.completedLocks.includes(activeLock.lockId)
+      ? room.completedLocks
+      : [...room.completedLocks, activeLock.lockId];
+
+    const nextRoom = {
+      ...room,
+      attemptsByLock: nextAttemptsByLock,
+      completedLocks: nextCompletedLocks,
+    };
+
+    saveRoom(nextRoom);
+    setRoom(nextRoom);
+    setSavedRoom(nextRoom);
+    setFeedback({
+      lockId: activeLock.lockId,
+      kind: 'correct',
+      message:
+        nextCompletedLocks.length === room.locks.length
+          ? 'Final lock opened. The room is complete.'
+          : 'Correct. The next lock is now available.',
+    });
   };
 
   if (room) {
+    const activeLockIndex = room.completedLocks.length;
+    const currentLock = room.locks[activeLockIndex];
+    const solvedCount = room.completedLocks.length;
+    const totalAttempts = Object.values(room.attemptsByLock).reduce((sum, attempts) => sum + attempts, 0);
+    const isComplete = solvedCount === room.locks.length;
+
     return (
       <main className="app-shell">
         <section className="room-header" aria-label="Active escape room">
@@ -63,40 +137,84 @@ function App() {
 
         <section className="control-strip" aria-label="Room status">
           <div>
-            <span className="metric-value">10</span>
-            <span className="metric-label">Locks generated</span>
+            <span className="metric-value">{activeLockIndex + (isComplete ? 0 : 1)}</span>
+            <span className="metric-label">Current lock</span>
           </div>
           <div>
-            <span className="metric-value">0</span>
+            <span className="metric-value">{solvedCount}</span>
             <span className="metric-label">Locks solved</span>
           </div>
           <div>
-            <span className="metric-value">0</span>
+            <span className="metric-value">{totalAttempts}</span>
             <span className="metric-label">Attempts</span>
           </div>
         </section>
 
-        <section className="lock-grid" aria-label="Generated lock list">
-          {room.locks.map((lock, index) => (
-            <article className="lock-card" key={lock.lockId}>
-              <div className="lock-number">{index + 1}</div>
+        <section className="progress-track" aria-label="Lock progress">
+          {room.locks.map((lock, index) => {
+            const isSolved = room.completedLocks.includes(lock.lockId);
+            const isCurrent = index === activeLockIndex && !isComplete;
+
+            return (
+              <div
+                className={`progress-step ${isSolved ? 'is-solved' : ''} ${isCurrent ? 'is-current' : ''}`}
+                key={lock.lockId}
+                aria-label={`Lock ${index + 1}: ${isSolved ? 'solved' : isCurrent ? 'current' : 'locked'}`}
+              >
+                {isSolved ? <CheckCircle2 size={18} /> : isCurrent ? <KeyRound size={18} /> : <LockKeyhole size={18} />}
+                <span>{index + 1}</span>
+              </div>
+            );
+          })}
+        </section>
+
+        {feedback?.kind === 'correct' && !isComplete ? (
+          <div className="feedback correct unlock-feedback">
+            <CheckCircle2 size={20} />
+            <span>{feedback.message}</span>
+          </div>
+        ) : null}
+
+        {isComplete ? (
+          <section className="completion-panel" aria-label="Escape room complete">
+            <CheckCircle2 size={44} />
+            <div>
+              <p className="eyebrow">Room complete</p>
+              <h2>All locks are open.</h2>
+              <p>
+                Nice work. The full screenshot-friendly completion summary will be the next grading-focused
+                increment.
+              </p>
+            </div>
+          </section>
+        ) : currentLock ? (
+          <section className="active-lock" aria-label={`Current challenge: ${currentLock.title}`}>
+            <div className="lock-card active-lock-card">
+              <div className="lock-number">{activeLockIndex + 1}</div>
               <div>
-                <p className="lock-type">{lock.category}</p>
-                <h2>{lock.title}</h2>
-                <p className="variant-label">Variant: {lock.challengeId}</p>
-                <p>{lock.prompt}</p>
+                <p className="lock-type">{currentLock.category}</p>
+                <h2>{currentLock.title}</h2>
+                <p>{currentLock.prompt}</p>
                 <pre>
-                  <code>{lock.code}</code>
+                  <code>{currentLock.code}</code>
                 </pre>
-                <div className="choice-row">
-                  {lock.choices.map((choice) => (
-                    <span key={choice.id}>{choice.label}</span>
+                <div className="answer-grid">
+                  {currentLock.choices.map((choice) => (
+                    <button type="button" key={choice.id} onClick={() => answerCurrentLock(choice.id)}>
+                      {choice.label}
+                    </button>
                   ))}
                 </div>
+                {feedback?.lockId === currentLock.lockId ? (
+                  <div className={`feedback ${feedback.kind}`}>
+                    {feedback.kind === 'correct' ? <CheckCircle2 size={20} /> : <XCircle size={20} />}
+                    <span>{feedback.message}</span>
+                  </div>
+                ) : null}
               </div>
-            </article>
-          ))}
-        </section>
+            </div>
+          </section>
+        ) : null}
       </main>
     );
   }
