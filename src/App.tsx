@@ -366,7 +366,9 @@ function App() {
         <h1 className="setup-title">AP CSA Conditional Escape Room</h1>
         <p className="intro">
           Enter the class code and team names. The same team and code will always rebuild the same room,
-          while other teams receive different selected locks and shuffled answer choices.
+          while other teams receive different selected locks and shuffled answer choices. Each challenge allows
+          two attempts: a first-try solve earns 1 point, a second-try solve earns 0.5 points, and two incorrect
+          attempts earns 0 points before moving to the next lock.
         </p>
 
         <div className="form-grid">
