@@ -327,8 +327,15 @@ pre {
   font-weight: 800;
 }
 
-.answer-grid button:hover,
+.answer-grid button:hover {
+  border-color: var(--blue);
+}
+
 .answer-grid button:focus {
+  outline: none;
+}
+
+.answer-grid button:focus-visible {
   border-color: var(--blue);
   outline: 3px solid rgba(36, 92, 143, 0.16);
 }

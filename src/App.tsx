@@ -200,7 +200,7 @@ function App() {
                 </pre>
                 <div className="answer-grid">
                   {currentLock.choices.map((choice) => (
-                    <button type="button" key={choice.id} onClick={() => answerCurrentLock(choice.id)}>
+                    <button type="button" key={`${currentLock.lockId}-${choice.id}`} onClick={() => answerCurrentLock(choice.id)}>
                       {choice.label}
                     </button>
                   ))}
