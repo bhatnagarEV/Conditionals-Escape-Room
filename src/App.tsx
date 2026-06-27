@@ -1,6 +1,7 @@
 import { CheckCircle2, KeyRound, LockKeyhole, Play, RotateCcw, ShieldCheck, UsersRound, XCircle } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { generateRoom } from './escape-room/roomEngine';
+import { hashSeed } from './escape-room/rng';
 import { clearSavedRoom, loadSavedRoom, saveRoom } from './escape-room/storage';
 import type { RoomSession } from './types';
 
@@ -11,6 +12,33 @@ type Feedback = {
   kind: 'correct' | 'incorrect';
   message: string;
 } | null;
+
+function formatDateTime(value: string): string {
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(new Date(value));
+}
+
+function formatElapsedTime(startIso: string, endIso: string): string {
+  const elapsedSeconds = Math.max(0, Math.round((new Date(endIso).getTime() - new Date(startIso).getTime()) / 1000));
+  const minutes = Math.floor(elapsedSeconds / 60);
+  const seconds = elapsedSeconds % 60;
+
+  if (minutes >= 60) {
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    return `${hours} hr ${remainingMinutes} min ${seconds.toString().padStart(2, '0')} sec`;
+  }
+
+  return `${minutes} min ${seconds.toString().padStart(2, '0')} sec`;
+}
+
+function buildCompletionCode(room: RoomSession, totalAttempts: number): string {
+  const challengeSignature = room.locks.map((lock) => lock.challengeId).join('|');
+  const codeNumber = hashSeed(`${room.seedText}|${challengeSignature}|${totalAttempts}`);
+  return `CSA-COND-${codeNumber.toString(16).toUpperCase().slice(0, 6)}`;
+}
 
 function App() {
   const [classCode, setClassCode] = useState('Conditionals-P4');
@@ -98,6 +126,7 @@ function App() {
       ...room,
       attemptsByLock: nextAttemptsByLock,
       completedLocks: nextCompletedLocks,
+      completedAt: nextCompletedLocks.length === room.locks.length ? new Date().toISOString() : room.completedAt,
     };
 
     saveRoom(nextRoom);
@@ -119,6 +148,8 @@ function App() {
     const solvedCount = room.completedLocks.length;
     const totalAttempts = Object.values(room.attemptsByLock).reduce((sum, attempts) => sum + attempts, 0);
     const isComplete = solvedCount === room.locks.length;
+    const completedAt = room.completedAt ?? new Date().toISOString();
+    const completionCode = buildCompletionCode(room, totalAttempts);
 
     return (
       <main className="app-shell">
@@ -176,15 +207,70 @@ function App() {
         ) : null}
 
         {isComplete ? (
-          <section className="completion-panel" aria-label="Escape room complete">
-            <CheckCircle2 size={44} />
-            <div>
-              <p className="eyebrow">Room complete</p>
-              <h2>All locks are open.</h2>
-              <p>
-                Nice work. The full screenshot-friendly completion summary will be the next grading-focused
-                increment.
-              </p>
+          <section className="summary-panel" aria-label="Escape room completion summary">
+            <div className="summary-header">
+              <div>
+                <p className="eyebrow">Room complete</p>
+                <h2>AP CSA Conditional Escape Room Summary</h2>
+                <p className="summary-instruction">Take a screenshot of this page and submit it for credit.</p>
+              </div>
+              <div className="completion-code">
+                <span>Completion Code</span>
+                <strong>{completionCode}</strong>
+              </div>
+            </div>
+
+            <div className="summary-facts" aria-label="Completion details">
+              <div>
+                <span>Students</span>
+                <strong>{room.studentNames.join(' + ')}</strong>
+              </div>
+              <div>
+                <span>Class Code</span>
+                <strong>{room.classCode}</strong>
+              </div>
+              <div>
+                <span>Completed</span>
+                <strong>{formatDateTime(completedAt)}</strong>
+              </div>
+              <div>
+                <span>Completion Time</span>
+                <strong>{formatElapsedTime(room.generatedAt, completedAt)}</strong>
+              </div>
+              <div>
+                <span>Total Attempts</span>
+                <strong>{totalAttempts}</strong>
+              </div>
+              <div>
+                <span>Room Seed</span>
+                <strong>{room.seedNumber}</strong>
+              </div>
+            </div>
+
+            <div className="summary-table-wrap">
+              <table className="summary-table">
+                <thead>
+                  <tr>
+                    <th>Lock</th>
+                    <th>Challenge Solved</th>
+                    <th>Variant</th>
+                    <th>Attempts</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {room.locks.map((lock, index) => (
+                    <tr key={lock.lockId}>
+                      <td>{index + 1}</td>
+                      <td>
+                        <strong>{lock.title}</strong>
+                        <span>{lock.category}</span>
+                      </td>
+                      <td>{lock.challengeId}</td>
+                      <td>{room.attemptsByLock[lock.lockId] ?? 0}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </section>
         ) : currentLock ? (

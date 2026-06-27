@@ -55,6 +55,7 @@ export interface RoomSession {
   seedText: string;
   seedNumber: number;
   generatedAt: string;
+  completedAt?: string;
   locks: GeneratedChallenge[];
   attemptsByLock: Record<string, number>;
   completedLocks: string[];
