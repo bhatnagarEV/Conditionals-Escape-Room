@@ -59,4 +59,5 @@ export interface RoomSession {
   locks: GeneratedChallenge[];
   attemptsByLock: Record<string, number>;
   completedLocks: string[];
+  failedLocks: string[];
 }

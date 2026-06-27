@@ -44,5 +44,6 @@ export function generateRoom(classCode: string, studentNames: string[]): RoomSes
     locks,
     attemptsByLock: Object.fromEntries(locks.map((lock) => [lock.lockId, 0])),
     completedLocks: [],
+    failedLocks: [],
   };
 }

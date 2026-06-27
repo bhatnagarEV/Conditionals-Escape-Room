@@ -6,10 +6,11 @@ import { clearSavedRoom, loadSavedRoom, saveRoom } from './escape-room/storage';
 import type { RoomSession } from './types';
 
 const defaultNames = ['', '', ''];
+const maxAttemptsPerLock = 2;
 
 type Feedback = {
   lockId: string;
-  kind: 'correct' | 'incorrect';
+  kind: 'correct' | 'incorrect' | 'failed';
   message: string;
 } | null;
 
@@ -36,7 +37,7 @@ function formatElapsedTime(startIso: string, endIso: string): string {
 
 function buildCompletionCode(room: RoomSession, totalAttempts: number): string {
   const challengeSignature = room.locks.map((lock) => lock.challengeId).join('|');
-  const codeNumber = hashSeed(`${room.seedText}|${challengeSignature}|${totalAttempts}`);
+  const codeNumber = hashSeed(`${room.seedText}|${challengeSignature}|${totalAttempts}|${room.failedLocks.join(',')}`);
   return `CSA-COND-${codeNumber.toString(16).toUpperCase().slice(0, 6)}`;
 }
 
@@ -88,7 +89,9 @@ function App() {
       return;
     }
 
-    const activeLockIndex = room.completedLocks.length;
+    const failedLocks = room.failedLocks ?? [];
+    const processedLocks = [...room.completedLocks, ...failedLocks];
+    const activeLockIndex = processedLocks.length;
     const activeLock = room.locks[activeLockIndex];
     const selectedChoice = activeLock?.choices.find((choice) => choice.id === choiceId);
 
@@ -102,9 +105,17 @@ function App() {
     };
 
     if (!selectedChoice.isCorrect) {
+      const attemptsForLock = nextAttemptsByLock[activeLock.lockId];
+      const shouldFailLock = attemptsForLock >= maxAttemptsPerLock;
+      const nextFailedLocks = shouldFailLock && !failedLocks.includes(activeLock.lockId)
+        ? [...failedLocks, activeLock.lockId]
+        : failedLocks;
+      const isRoomFinished = room.completedLocks.length + nextFailedLocks.length === room.locks.length;
       const nextRoom = {
         ...room,
         attemptsByLock: nextAttemptsByLock,
+        failedLocks: nextFailedLocks,
+        completedAt: isRoomFinished ? new Date().toISOString() : room.completedAt,
       };
 
       saveRoom(nextRoom);
@@ -112,8 +123,10 @@ function App() {
       setSavedRoom(nextRoom);
       setFeedback({
         lockId: activeLock.lockId,
-        kind: 'incorrect',
-        message: 'Not quite. Trace the code again and try another answer.',
+        kind: shouldFailLock ? 'failed' : 'incorrect',
+        message: shouldFailLock
+          ? 'Two incorrect attempts. This lock receives 0 points and the next lock is now available.'
+          : 'Not quite. You have 1 attempt remaining before this lock receives 0 points.',
       });
       return;
     }
@@ -126,7 +139,8 @@ function App() {
       ...room,
       attemptsByLock: nextAttemptsByLock,
       completedLocks: nextCompletedLocks,
-      completedAt: nextCompletedLocks.length === room.locks.length ? new Date().toISOString() : room.completedAt,
+      failedLocks,
+      completedAt: nextCompletedLocks.length + failedLocks.length === room.locks.length ? new Date().toISOString() : room.completedAt,
     };
 
     saveRoom(nextRoom);
@@ -143,11 +157,14 @@ function App() {
   };
 
   if (room) {
-    const activeLockIndex = room.completedLocks.length;
+    const failedLocks = room.failedLocks ?? [];
+    const processedCount = room.completedLocks.length + failedLocks.length;
+    const activeLockIndex = processedCount;
     const currentLock = room.locks[activeLockIndex];
     const solvedCount = room.completedLocks.length;
+    const failedCount = failedLocks.length;
     const totalAttempts = Object.values(room.attemptsByLock).reduce((sum, attempts) => sum + attempts, 0);
-    const isComplete = solvedCount === room.locks.length;
+    const isComplete = processedCount === room.locks.length;
     const completedAt = room.completedAt ?? new Date().toISOString();
     const completionCode = buildCompletionCode(room, totalAttempts);
 
@@ -173,35 +190,36 @@ function App() {
           </div>
           <div>
             <span className="metric-value">{solvedCount}</span>
-            <span className="metric-label">Locks solved</span>
+            <span className="metric-label">Solved</span>
           </div>
           <div>
-            <span className="metric-value">{totalAttempts}</span>
-            <span className="metric-label">Attempts</span>
+            <span className="metric-value">{failedCount}</span>
+            <span className="metric-label">Zero scores</span>
           </div>
         </section>
 
         <section className="progress-track" aria-label="Lock progress">
           {room.locks.map((lock, index) => {
             const isSolved = room.completedLocks.includes(lock.lockId);
+            const isFailed = failedLocks.includes(lock.lockId);
             const isCurrent = index === activeLockIndex && !isComplete;
 
             return (
               <div
-                className={`progress-step ${isSolved ? 'is-solved' : ''} ${isCurrent ? 'is-current' : ''}`}
+                className={`progress-step ${isSolved ? 'is-solved' : ''} ${isFailed ? 'is-failed' : ''} ${isCurrent ? 'is-current' : ''}`}
                 key={lock.lockId}
-                aria-label={`Lock ${index + 1}: ${isSolved ? 'solved' : isCurrent ? 'current' : 'locked'}`}
+                aria-label={`Lock ${index + 1}: ${isSolved ? 'solved' : isFailed ? 'failed' : isCurrent ? 'current' : 'locked'}`}
               >
-                {isSolved ? <CheckCircle2 size={18} /> : isCurrent ? <KeyRound size={18} /> : <LockKeyhole size={18} />}
+                {isSolved ? <CheckCircle2 size={18} /> : isFailed ? <XCircle size={18} /> : isCurrent ? <KeyRound size={18} /> : <LockKeyhole size={18} />}
                 <span>{index + 1}</span>
               </div>
             );
           })}
         </section>
 
-        {feedback?.kind === 'correct' && !isComplete ? (
-          <div className="feedback correct unlock-feedback">
-            <CheckCircle2 size={20} />
+        {(feedback?.kind === 'correct' || feedback?.kind === 'failed') && !isComplete ? (
+          <div className={`feedback ${feedback.kind} unlock-feedback`}>
+            {feedback.kind === 'correct' ? <CheckCircle2 size={20} /> : <XCircle size={20} />}
             <span>{feedback.message}</span>
           </div>
         ) : null}
@@ -242,6 +260,14 @@ function App() {
                 <strong>{totalAttempts}</strong>
               </div>
               <div>
+                <span>Score</span>
+                <strong>{solvedCount} / {room.locks.length}</strong>
+              </div>
+              <div>
+                <span>Zero Scores</span>
+                <strong>{failedCount}</strong>
+              </div>
+              <div>
                 <span>Room Seed</span>
                 <strong>{room.seedNumber}</strong>
               </div>
@@ -252,23 +278,28 @@ function App() {
                 <thead>
                   <tr>
                     <th>Lock</th>
-                    <th>Challenge Solved</th>
+                    <th>Challenge</th>
                     <th>Variant</th>
                     <th>Attempts</th>
+                    <th>Score</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {room.locks.map((lock, index) => (
-                    <tr key={lock.lockId}>
-                      <td>{index + 1}</td>
-                      <td>
-                        <strong>{lock.title}</strong>
-                        <span>{lock.category}</span>
-                      </td>
-                      <td>{lock.challengeId}</td>
-                      <td>{room.attemptsByLock[lock.lockId] ?? 0}</td>
-                    </tr>
-                  ))}
+                  {room.locks.map((lock, index) => {
+                    const wasFailed = failedLocks.includes(lock.lockId);
+                    return (
+                      <tr key={lock.lockId} className={wasFailed ? 'summary-failed-row' : ''}>
+                        <td>{index + 1}</td>
+                        <td>
+                          <strong>{lock.title}</strong>
+                          <span>{lock.category}</span>
+                        </td>
+                        <td>{lock.challengeId}</td>
+                        <td>{room.attemptsByLock[lock.lockId] ?? 0}</td>
+                        <td>{wasFailed ? '0' : '1'}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -280,6 +311,9 @@ function App() {
               <div>
                 <p className="lock-type">{currentLock.category}</p>
                 <h2>{currentLock.title}</h2>
+                <p className="attempt-note">
+                  Attempts: {room.attemptsByLock[currentLock.lockId] ?? 0} / {maxAttemptsPerLock}
+                </p>
                 <p>{currentLock.prompt}</p>
                 <pre>
                   <code>{currentLock.code}</code>
