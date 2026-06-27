@@ -183,9 +183,130 @@ input:focus {
   background: #ffffff;
 }
 
+.secondary-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0 16px;
+  color: var(--ink);
+  background: #ffffff;
+  font-weight: 800;
+  text-decoration: none;
+}
+
 .icon-button {
   width: 44px;
   padding: 0;
+}
+
+.teacher-shell {
+  width: min(1280px, calc(100% - 32px));
+}
+
+.teacher-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.teacher-header h1 {
+  margin-bottom: 10px;
+  font-size: clamp(2.4rem, 7vw, 5.2rem);
+}
+
+.teacher-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.teacher-controls {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+  gap: 12px;
+  align-items: end;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin-bottom: 18px;
+  padding: 16px;
+  background: var(--paper);
+  box-shadow: var(--shadow);
+}
+
+.answer-key-panel {
+  display: grid;
+  gap: 16px;
+}
+
+.answer-key-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.answer-key-summary div,
+.answer-key-detail {
+  display: grid;
+  gap: 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #ffffff;
+}
+
+.answer-key-summary span,
+.answer-key-detail span {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.answer-key-list {
+  display: grid;
+  gap: 14px;
+}
+
+.answer-key-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 16px;
+  background: var(--paper);
+  box-shadow: var(--shadow);
+}
+
+.answer-key-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.answer-key-card-header h2 {
+  font-size: 1.35rem;
+}
+
+.answer-key-card-header > span {
+  border: 1px solid rgba(36, 92, 143, 0.25);
+  border-radius: 999px;
+  padding: 6px 10px;
+  color: var(--blue);
+  background: #e9f2fb;
+  font-size: 0.82rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.answer-key-detail {
+  margin-top: 10px;
+}
+
+.answer-key-detail p {
+  margin-bottom: 0;
 }
 
 .room-header {
@@ -571,6 +692,20 @@ pre {
     align-items: center;
   }
 
+  .teacher-header,
+  .answer-key-card-header {
+    display: grid;
+  }
+
+  .teacher-actions {
+    flex-wrap: wrap;
+  }
+
+  .teacher-controls,
+  .answer-key-summary {
+    grid-template-columns: 1fr;
+  }
+
   .summary-header {
     display: grid;
   }
@@ -596,7 +731,9 @@ pre {
 
   .room-header,
   .control-strip,
-  .progress-track {
+  .progress-track,
+  .teacher-controls,
+  .teacher-actions {
     display: none;
   }
 
@@ -607,6 +744,11 @@ pre {
 
   .summary-panel {
     border-color: #9aa7b3;
+    box-shadow: none;
+  }
+
+  .answer-key-card,
+  .teacher-controls {
     box-shadow: none;
   }
 }

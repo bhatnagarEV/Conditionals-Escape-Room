@@ -1,5 +1,4 @@
-
-import { CheckCircle2, KeyRound, LockKeyhole, Play, RotateCcw, ShieldCheck, UsersRound, XCircle } from 'lucide-react';
+import { CheckCircle2, KeyRound, LockKeyhole, Play, Printer, RotateCcw, ShieldCheck, UsersRound, XCircle } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { generateRoom } from './escape-room/roomEngine';
 import { hashSeed } from './escape-room/rng';
@@ -63,7 +62,9 @@ function App() {
   const [studentNames, setStudentNames] = useState(defaultNames);
   const [room, setRoom] = useState<RoomSession | null>(null);
   const [savedRoom, setSavedRoom] = useState<RoomSession | null>(null);
+  const [teacherRoom, setTeacherRoom] = useState<RoomSession | null>(null);
   const [feedback, setFeedback] = useState<Feedback>(null);
+  const isTeacherMode = new URLSearchParams(window.location.search).get('teacher') === '1';
 
   useEffect(() => {
     setSavedRoom(loadSavedRoom());
@@ -72,6 +73,14 @@ function App() {
   const canStart = useMemo(() => {
     return classCode.trim().length > 0 && studentNames.some((name) => name.trim().length > 0);
   }, [classCode, studentNames]);
+
+  const generateTeacherRoom = () => {
+    if (!canStart) {
+      return;
+    }
+
+    setTeacherRoom(generateRoom(classCode, studentNames));
+  };
 
   const startRoom = () => {
     if (!canStart) {
@@ -100,6 +109,140 @@ function App() {
     setSavedRoom(null);
     setFeedback(null);
   };
+
+  if (isTeacherMode) {
+    return (
+      <main className="app-shell teacher-shell">
+        <section className="teacher-header" aria-label="Teacher mode">
+          <div>
+            <p className="eyebrow">Teacher Mode</p>
+            <h1>Answer Key</h1>
+            <p className="intro">
+              Enter the class code and student names for a group to reconstruct that exact seeded room.
+              Teacher Mode is intended for previewing, troubleshooting, and printing answer keys.
+            </p>
+          </div>
+          <div className="teacher-actions">
+            <button className="secondary-button" type="button" onClick={() => window.print()} disabled={!teacherRoom}>
+              <Printer size={18} />
+              Print key
+            </button>
+            <a className="secondary-link" href={window.location.pathname}>
+              Student view
+            </a>
+          </div>
+        </section>
+
+        <section className="teacher-controls" aria-label="Generate answer key">
+          <label>
+            <span>
+              <KeyRound size={18} />
+              Class code
+            </span>
+            <input value={classCode} onChange={(event) => setClassCode(event.target.value)} placeholder="Conditionals-P4" />
+          </label>
+
+          <label>
+            <span>
+              <UsersRound size={18} />
+              Student 1
+            </span>
+            <input
+              value={studentNames[0]}
+              onChange={(event) => setStudentNames([event.target.value, studentNames[1], studentNames[2]])}
+              placeholder="Alice"
+            />
+          </label>
+
+          <label>
+            <span>
+              <UsersRound size={18} />
+              Student 2
+            </span>
+            <input
+              value={studentNames[1]}
+              onChange={(event) => setStudentNames([studentNames[0], event.target.value, studentNames[2]])}
+              placeholder="Bob"
+            />
+          </label>
+
+          <label>
+            <span>
+              <UsersRound size={18} />
+              Student 3
+            </span>
+            <input
+              value={studentNames[2]}
+              onChange={(event) => setStudentNames([studentNames[0], studentNames[1], event.target.value])}
+              placeholder="Optional"
+            />
+          </label>
+
+          <button className="primary-button" type="button" onClick={generateTeacherRoom} disabled={!canStart}>
+            <Play size={19} />
+            Generate answer key
+          </button>
+        </section>
+
+        {teacherRoom ? (
+          <section className="answer-key-panel" aria-label="Generated answer key">
+            <div className="answer-key-summary">
+              <div>
+                <span>Students</span>
+                <strong>{teacherRoom.studentNames.join(' + ')}</strong>
+              </div>
+              <div>
+                <span>Class Code</span>
+                <strong>{teacherRoom.classCode}</strong>
+              </div>
+              <div>
+                <span>Room Seed</span>
+                <strong>{teacherRoom.seedNumber}</strong>
+              </div>
+              <div>
+                <span>Locks</span>
+                <strong>{teacherRoom.locks.length}</strong>
+              </div>
+            </div>
+
+            <div className="answer-key-list">
+              {teacherRoom.locks.map((lock, index) => {
+                const correctChoice = lock.choices.find((choice) => choice.isCorrect);
+
+                return (
+                  <article className="answer-key-card" key={lock.lockId}>
+                    <div className="answer-key-card-header">
+                      <div>
+                        <p className="lock-type">Lock {index + 1} · {lock.category}</p>
+                        <h2>{lock.title}</h2>
+                      </div>
+                      <span>{lock.challengeId}</span>
+                    </div>
+                    <p>{lock.prompt}</p>
+                    <pre>
+                      <code>{lock.code}</code>
+                    </pre>
+                    <div className="answer-key-detail">
+                      <span>Correct Answer</span>
+                      <strong>{correctChoice?.label ?? 'Missing answer'}</strong>
+                    </div>
+                    <div className="answer-key-detail">
+                      <span>Explanation</span>
+                      <p>{lock.explanation}</p>
+                    </div>
+                    <div className="answer-key-detail">
+                      <span>Hints</span>
+                      <p>{lock.hints.join(' ')}</p>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </section>
+        ) : null}
+      </main>
+    );
+  }
 
   const answerCurrentLock = (choiceId: string) => {
     if (!room) {
@@ -388,7 +531,7 @@ function App() {
             </span>
             <input
               value={studentNames[0]}
-              onChange={(event) => setStudentNames([event.target.value, studentNames[1]])}
+              onChange={(event) => setStudentNames([event.target.value, studentNames[1], studentNames[2]])}
               placeholder="Alice"
             />
           </label>
@@ -400,7 +543,7 @@ function App() {
             </span>
             <input
               value={studentNames[1]}
-              onChange={(event) => setStudentNames([studentNames[0], event.target.value])}
+              onChange={(event) => setStudentNames([studentNames[0], event.target.value, studentNames[2]])}
               placeholder="Bob"
             />
           </label>
