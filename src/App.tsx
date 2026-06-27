@@ -5,7 +5,7 @@ import { hashSeed } from './escape-room/rng';
 import { clearSavedRoom, loadSavedRoom, saveRoom } from './escape-room/storage';
 import type { RoomSession } from './types';
 
-const defaultNames = ['', ''];
+const defaultNames = ['', '', ''];
 
 type Feedback = {
   lockId: string;
@@ -71,7 +71,7 @@ function App() {
     if (savedRoom) {
       setRoom(savedRoom);
       setClassCode(savedRoom.classCode);
-      setStudentNames([...savedRoom.studentNames, ...defaultNames].slice(0, 2));
+      setStudentNames([...savedRoom.studentNames, ...defaultNames].slice(0, 3));
       setFeedback(null);
     }
   };
@@ -347,6 +347,18 @@ function App() {
               value={studentNames[1]}
               onChange={(event) => setStudentNames([studentNames[0], event.target.value])}
               placeholder="Bob"
+            />
+          </label>
+
+          <label>
+            <span>
+              <UsersRound size={18} />
+              Student 3
+            </span>
+            <input
+              value={studentNames[2]}
+              onChange={(event) => setStudentNames([studentNames[0], studentNames[1], event.target.value])}
+              placeholder="Optional"
             />
           </label>
         </div>
