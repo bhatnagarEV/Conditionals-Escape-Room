@@ -1,6 +1,6 @@
 import type { RoomSession } from '../types';
 
-const STORAGE_KEY = 'ap-csa-conditionals-active-room-v4';
+const STORAGE_KEY = 'ap-csa-conditionals-active-room-v5';
 
 export function loadSavedRoom(): RoomSession | null {
   const savedRoom = window.localStorage.getItem(STORAGE_KEY);

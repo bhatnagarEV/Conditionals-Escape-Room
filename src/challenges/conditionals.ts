@@ -1028,4 +1028,494 @@ if (present && !excused) {
 }`, 'absent', ['here', 'excused', 'empty string'], 'present is false and excused is false, so else runs.'),
     ],
   },
+  {
+    id: 'lock-11',
+    order: 11,
+    title: 'Advanced Compound Boolean Expressions',
+    lockType: 'compound-boolean',
+    bank: [
+      compoundBoolean(101, `int a = 6;
+int b = 9;
+boolean ready = false;
+
+a < b && !(ready || b - a < 2)`, 'true', 'a < b is true. ready || b - a < 2 is false, so the negation is true.'),
+      compoundBoolean(102, `int score = 88;
+boolean late = true;
+boolean excused = false;
+
+score >= 85 && (!late || excused)`, 'false', 'score >= 85 is true, but !late || excused is false.'),
+      compoundBoolean(103, `int x = 4;
+int y = 11;
+int z = 7;
+
+x + z > y && y % z == 4`, 'false', 'x + z > y is false because 11 is not greater than 11.'),
+      compoundBoolean(104, `boolean hasKey = false;
+boolean knowsCode = true;
+int attempts = 2;
+
+(hasKey || knowsCode) && attempts < 3`, 'true', 'knowsCode is true and attempts is less than 3.'),
+      compoundBoolean(105, `int temp = 31;
+boolean windy = true;
+
+!(temp >= 32) && windy`, 'true', 'temp >= 32 is false, so its negation is true, and windy is true.'),
+      compoundBoolean(106, `int n = 18;
+
+n % 2 == 0 && (n % 3 == 0 || n % 5 == 0)`, 'true', '18 is even and divisible by 3.'),
+      compoundBoolean(107, `int n = 21;
+
+n % 2 == 0 || n % 7 == 0 && n > 30`, 'false', '&& is evaluated before ||; n % 7 == 0 is true, but n > 30 is false.'),
+      compoundBoolean(108, `boolean a = true;
+boolean b = false;
+boolean c = false;
+
+!(a && b) && (b || !c)`, 'true', 'a && b is false, so its negation is true. b || !c is also true.'),
+      compoundBoolean(109, `int points = 45;
+boolean bonus = true;
+
+points + 10 >= 60 || bonus && points > 40`, 'true', 'bonus && points > 40 is true, so the full || expression is true.'),
+      compoundBoolean(110, `int age = 17;
+boolean parent = false;
+boolean permit = true;
+
+(age >= 18 || parent) && permit`, 'false', 'age >= 18 || parent is false, even though permit is true.'),
+      compoundBoolean(111, `int x = 3;
+int y = 5;
+
+!(x * y >= 15) || y - x == 2`, 'true', 'x * y >= 15 is true, so the negation is false, but y - x == 2 is true.'),
+      compoundBoolean(112, `boolean p = false;
+boolean q = true;
+boolean r = true;
+
+p || q && !r`, 'false', 'q && !r is false, and p is also false.'),
+    ],
+  },
+  {
+    id: 'lock-12',
+    order: 12,
+    title: 'Advanced Predict Output',
+    lockType: 'predict-output',
+    bank: [
+      predictOutput(101, `int x = 7;
+int y = 2;
+
+if (x / y == 3 && x % y == 1) {
+    System.out.println("alpha");
+} else {
+    System.out.println("beta");
+}`, 'alpha', ['beta', '3', '1'], 'Integer division gives 7 / 2 as 3 and the remainder is 1.'),
+      predictOutput(102, `int n = 12;
+
+if (n % 4 == 0) {
+    if (n % 3 == 0) {
+        System.out.println("both");
+    } else {
+        System.out.println("four");
+    }
+} else {
+    System.out.println("neither");
+}`, 'both', ['four', 'neither', '12'], '12 is divisible by both 4 and 3.'),
+      predictOutput(103, `boolean a = true;
+boolean b = false;
+
+if (a && !b) {
+    System.out.println("open");
+} else if (a || b) {
+    System.out.println("maybe");
+} else {
+    System.out.println("closed");
+}`, 'open', ['maybe', 'closed', 'true'], 'a && !b is true, so the first branch runs.'),
+      predictOutput(104, `int score = 79;
+
+if (score >= 90) {
+    System.out.println("A");
+} else if (score >= 80) {
+    System.out.println("B");
+} else if (score >= 70) {
+    System.out.println("C");
+} else {
+    System.out.println("D");
+}`, 'C', ['A', 'B', 'D'], '79 is at least 70 but less than 80.'),
+      predictOutput(105, `int x = 5;
+int y = 5;
+
+if (x++ > y) {
+    System.out.println("first");
+} else if (x == 6) {
+    System.out.println("second");
+} else {
+    System.out.println("third");
+}`, 'second', ['first', 'third', '6'], 'x++ compares 5 to 5, then x becomes 6 before the else-if.'),
+      predictOutput(106, `int a = 4;
+int b = 9;
+
+if (a > 0 && b / a == 2) {
+    System.out.println("yes");
+} else {
+    System.out.println("no");
+}`, 'yes', ['no', '2.25', 'Nothing is printed'], 'Integer division makes 9 / 4 equal to 2.'),
+      predictOutput(107, `String word = "CSA";
+
+if (word.length() > 3) {
+    System.out.println("long");
+} else if (word.equals("CSA")) {
+    System.out.println("match");
+} else {
+    System.out.println("other");
+}`, 'match', ['long', 'other', 'CSA'], 'The length is 3, so the else-if checks the String value.'),
+      predictOutput(108, `int n = -3;
+
+if (n > 0) {
+    System.out.println("positive");
+} else if (n % 2 == 0) {
+    System.out.println("even");
+} else {
+    System.out.println("other");
+}`, 'other', ['positive', 'even', '-3'], '-3 is not positive and is not even.'),
+      predictOutput(109, `boolean locked = false;
+int code = 1234;
+
+if (!locked && code == 1234) {
+    System.out.println("enter");
+} else {
+    System.out.println("deny");
+}`, 'enter', ['deny', '1234', 'false'], '!locked is true and the code matches.'),
+      predictOutput(110, `int x = 10;
+
+if (x < 5)
+    System.out.println("small");
+else if (x < 10)
+    System.out.println("medium");
+else
+    System.out.println("large");
+System.out.println("done");`, 'large and then done', ['large only', 'medium and then done', 'done only'], 'The else branch prints large, then the final print always runs.'),
+      predictOutput(111, `int count = 0;
+
+if (count != 0 && 10 / count > 1) {
+    System.out.println("safe");
+} else {
+    System.out.println("skip");
+}`, 'skip', ['safe', 'division by zero', 'Nothing is printed'], 'Short-circuit evaluation skips the division and the else branch runs.'),
+      predictOutput(112, `int x = 2;
+int y = 8;
+
+if (x * 4 == y || y / x == 3) {
+    System.out.println("pass");
+} else {
+    System.out.println("fail");
+}`, 'pass', ['fail', '4', '3'], 'x * 4 == y is true, so the || expression is true.'),
+    ],
+  },
+  {
+    id: 'lock-13',
+    order: 13,
+    title: 'Advanced Nested If Trace',
+    lockType: 'nested-if',
+    bank: [
+      nestedIf(101, `int score = 86;
+boolean late = true;
+
+if (score >= 80) {
+    if (!late) {
+        System.out.println("honor");
+    } else {
+        System.out.println("check");
+    }
+} else {
+    System.out.println("practice");
+}`, 'check', ['honor', 'practice', 'late'], 'The score passes, but late is true, so !late is false.'),
+      nestedIf(102, `int a = 6;
+int b = 3;
+
+if (a % b == 0) {
+    if (a / b > 2) {
+        System.out.println("large");
+    } else {
+        System.out.println("small");
+    }
+} else {
+    System.out.println("none");
+}`, 'small', ['large', 'none', '2'], 'a / b is 2, which is not greater than 2.'),
+      nestedIf(103, `boolean hasPass = false;
+int credits = 12;
+
+if (credits >= 10) {
+    if (hasPass) {
+        System.out.println("enter");
+    } else {
+        System.out.println("buy pass");
+    }
+} else {
+    System.out.println("earn credits");
+}`, 'buy pass', ['enter', 'earn credits', 'false'], 'credits is high enough, but hasPass is false.'),
+      nestedIf(104, `int x = 1;
+int y = 4;
+
+if (x + y > 5) {
+    if (y - x > 2) {
+        System.out.println("wide");
+    } else {
+        System.out.println("close");
+    }
+} else {
+    System.out.println("low");
+}`, 'low', ['wide', 'close', '5'], 'x + y is exactly 5, not greater than 5.'),
+      nestedIf(105, `String level = "hard";
+int lives = 1;
+
+if (level.equals("hard")) {
+    if (lives > 1) {
+        System.out.println("continue");
+    } else {
+        System.out.println("careful");
+    }
+} else {
+    System.out.println("relax");
+}`, 'careful', ['continue', 'relax', 'hard'], 'The level matches, but lives > 1 is false.'),
+      nestedIf(106, `int row = 5;
+int col = 5;
+
+if (row == col) {
+    if (row % 2 == 0) {
+        System.out.println("even square");
+    } else {
+        System.out.println("odd square");
+    }
+} else {
+    System.out.println("rectangle");
+}`, 'odd square', ['even square', 'rectangle', '5'], 'row equals col and row is odd.'),
+      nestedIf(107, `boolean online = false;
+boolean cached = true;
+
+if (online) {
+    if (cached) {
+        System.out.println("sync");
+    } else {
+        System.out.println("load");
+    }
+} else {
+    System.out.println("offline");
+}`, 'offline', ['sync', 'load', 'cached'], 'The outer condition is false.'),
+      nestedIf(108, `int age = 16;
+boolean permit = true;
+
+if (age >= 16) {
+    if (permit) {
+        System.out.println("drive");
+    } else {
+        System.out.println("test");
+    }
+} else {
+    System.out.println("wait");
+}`, 'drive', ['test', 'wait', 'permit'], 'Both the outer and inner conditions are true.'),
+      nestedIf(109, `int battery = 15;
+boolean pluggedIn = true;
+
+if (battery < 20) {
+    if (pluggedIn) {
+        System.out.println("charging");
+    } else {
+        System.out.println("low");
+    }
+} else {
+    System.out.println("ok");
+}`, 'charging', ['low', 'ok', '15'], 'battery < 20 and pluggedIn are both true.'),
+      nestedIf(110, `int n = 14;
+
+if (n % 2 == 0) {
+    if (n % 7 == 0) {
+        System.out.println("special");
+    } else {
+        System.out.println("even");
+    }
+} else {
+    System.out.println("odd");
+}`, 'special', ['even', 'odd', '14'], '14 is divisible by both 2 and 7.'),
+      nestedIf(111, `boolean member = true;
+int purchases = 1;
+
+if (member) {
+    if (purchases > 3) {
+        System.out.println("reward");
+    } else {
+        System.out.println("member");
+    }
+} else {
+    System.out.println("guest");
+}`, 'member', ['reward', 'guest', '1'], 'member is true, but purchases > 3 is false.'),
+      nestedIf(112, `int width = 9;
+int height = 4;
+
+if (width > height) {
+    if (width - height > 5) {
+        System.out.println("wide");
+    } else {
+        System.out.println("landscape");
+    }
+} else {
+    System.out.println("portrait");
+}`, 'landscape', ['wide', 'portrait', '5'], 'width is greater, but the difference is exactly 5, not greater than 5.'),
+    ],
+  },
+  {
+    id: 'lock-14',
+    order: 14,
+    title: 'Advanced DeMorgan and Equivalence',
+    lockType: 'demorgan',
+    bank: [
+      demorgan(101, `!((x >= 4 && y != 2) || ready)`, '(x < 4 || y == 2) && !ready', ['x < 4 && y == 2 && !ready', '(x < 4 || y == 2) || !ready', 'x >= 4 || y != 2 || ready'], 'Negate the outer ||, then apply DeMorgan to the inner &&.'),
+      demorgan(102, `!(score < 70 || late && !excused)`, 'score >= 70 && (!late || excused)', ['score >= 70 || (!late && excused)', 'score > 70 && (!late || excused)', 'score < 70 && late && !excused'], '&& has precedence before ||, then DeMorgan flips the grouped parts.'),
+      demorgan(103, `!(!open && attempts <= 3)`, 'open || attempts > 3', ['open && attempts > 3', '!open || attempts >= 3', 'open || attempts >= 3'], 'Negating !open gives open, and <= becomes >.'),
+      demorgan(104, `!(a == b || c != d)`, 'a != b && c == d', ['a != b || c == d', 'a == b && c != d', 'a < b && c == d'], 'The || changes to &&, == becomes !=, and != becomes ==.'),
+      demorgan(105, `!((n % 2 == 0) && (n > 10 || bonus))`, 'n % 2 != 0 || (n <= 10 && !bonus)', ['n % 2 != 0 && (n <= 10 || !bonus)', 'n % 2 == 0 || (n <= 10 && !bonus)', 'n % 2 != 0 || (n > 10 && bonus)'], 'Negate the &&, then negate the inner ||.'),
+      demorgan(106, `!(hasId && (age >= 18 || parent))`, '!hasId || (age < 18 && !parent)', ['!hasId && (age < 18 || !parent)', 'hasId || (age < 18 && !parent)', '!hasId || (age <= 18 && !parent)'], 'The outer && becomes ||, and the inner || becomes &&.'),
+      demorgan(107, `!((x < y || y < z) && valid)`, '(x >= y && y >= z) || !valid', ['(x >= y || y >= z) && !valid', '(x < y && y < z) || !valid', '(x >= y && y >= z) && !valid'], 'Negate the outer &&, then negate the inner ||.'),
+      demorgan(108, `!(finished || (errors == 0 && saved))`, '!finished && (errors != 0 || !saved)', ['!finished || (errors != 0 && !saved)', 'finished && (errors == 0 || saved)', '!finished && (errors == 0 || !saved)'], 'The outer || becomes &&, and the grouped && becomes ||.'),
+      demorgan(109, `!((level > 5 && key) || admin)`, '(level <= 5 || !key) && !admin', ['level <= 5 && !key && !admin', '(level <= 5 || !key) || !admin', 'level > 5 || key || admin'], 'Negate both sides of the outer ||.'),
+      demorgan(110, `!(cold || windy || raining)`, '!cold && !windy && !raining', ['!cold || !windy || !raining', 'cold && windy && raining', '!cold && (!windy || !raining)'], 'A negated chain of || conditions becomes all && conditions.'),
+      demorgan(111, `!(a && b && !c)`, '!a || !b || c', ['!a && !b && c', 'a || b || !c', '!a || !b || !c'], 'A negated chain of && conditions becomes all || conditions, and !!c becomes c.'),
+      demorgan(112, `!((x <= 0 || y >= 10) && active)`, '(x > 0 && y < 10) || !active', ['(x > 0 || y < 10) && !active', '(x <= 0 && y >= 10) || !active', '(x > 0 && y < 10) && !active'], 'Negate the outer &&, then negate the inner ||.'),
+    ],
+  },
+  {
+    id: 'lock-15',
+    order: 15,
+    title: 'Advanced Final Boss',
+    lockType: 'final-boss',
+    bank: [
+      finalBoss(101, `int a = 8;
+int b = 3;
+boolean flag = false;
+String result = "";
+
+if (a % b == 2 && !flag) {
+    result = "alpha";
+} else if (a / b > 2 || flag) {
+    result = "beta";
+} else {
+    result = "gamma";
+}`, 'alpha', ['beta', 'gamma', 'empty string'], '8 % 3 is 2 and !flag is true.'),
+      finalBoss(102, `int score = 91;
+boolean late = true;
+String result = "";
+
+if (score >= 90 && !late) {
+    result = "gold";
+} else if (score >= 90 || !late) {
+    result = "silver";
+} else {
+    result = "bronze";
+}`, 'silver', ['gold', 'bronze', 'empty string'], 'The first branch fails because late is true, but score >= 90 makes the else-if true.'),
+      finalBoss(103, `int x = 5;
+int y = 12;
+String result = "";
+
+if (x * 2 > y) {
+    result = "large";
+} else if (y / x == 2 && y % x == 2) {
+    result = "divide";
+} else {
+    result = "other";
+}`, 'divide', ['large', 'other', 'empty string'], '12 / 5 is 2 and 12 % 5 is 2.'),
+      finalBoss(104, `boolean hasPass = false;
+boolean invited = true;
+int age = 17;
+String result = "";
+
+if (hasPass && age >= 18) {
+    result = "enter";
+} else if (invited && age >= 16) {
+    result = "guest";
+} else {
+    result = "deny";
+}`, 'guest', ['enter', 'deny', 'empty string'], 'The first branch fails, but invited and age >= 16 are true.'),
+      finalBoss(105, `int n = 30;
+String result = "";
+
+if (n % 2 == 0 && n % 5 == 0) {
+    result = "ten";
+} else if (n % 3 == 0) {
+    result = "three";
+} else {
+    result = "none";
+}`, 'ten', ['three', 'none', 'empty string'], 'The first branch is true, so the else-if is skipped even though n is divisible by 3.'),
+      finalBoss(106, `int level = 4;
+boolean key = true;
+String result = "";
+
+if (level > 5 && key) {
+    result = "unlock";
+} else if (level > 5 || key) {
+    result = "almost";
+} else {
+    result = "locked";
+}`, 'almost', ['unlock', 'locked', 'empty string'], 'The && branch fails, but key makes the || branch true.'),
+      finalBoss(107, `int battery = 19;
+boolean charging = false;
+String result = "";
+
+if (battery < 20 && !charging) {
+    result = "critical";
+} else if (battery < 50 || charging) {
+    result = "watch";
+} else {
+    result = "ok";
+}`, 'critical', ['watch', 'ok', 'empty string'], 'battery < 20 and !charging are both true.'),
+      finalBoss(108, `int row = 6;
+int col = 6;
+String result = "";
+
+if (row == col && row % 2 == 0) {
+    result = "even square";
+} else if (row == col) {
+    result = "square";
+} else {
+    result = "rectangle";
+}`, 'even square', ['square', 'rectangle', 'empty string'], 'The first branch is true, so the less specific else-if is skipped.'),
+      finalBoss(109, `int attempts = 3;
+boolean admin = false;
+String result = "";
+
+if (attempts < 3 || admin) {
+    result = "try";
+} else if (attempts == 3 && !admin) {
+    result = "wait";
+} else {
+    result = "block";
+}`, 'wait', ['try', 'block', 'empty string'], 'The first branch is false and the else-if is true.'),
+      finalBoss(110, `int temp = 32;
+boolean snowing = true;
+String result = "";
+
+if (temp < 32 && snowing) {
+    result = "snow";
+} else if (temp <= 32 && snowing) {
+    result = "slush";
+} else {
+    result = "rain";
+}`, 'slush', ['snow', 'rain', 'empty string'], 'temp < 32 is false, but temp <= 32 is true.'),
+      finalBoss(111, `String mode = "review";
+int score = 100;
+String result = "";
+
+if (mode.equals("test") && score == 100) {
+    result = "perfect";
+} else if (mode.equals("review") || score >= 90) {
+    result = "practice";
+} else {
+    result = "study";
+}`, 'practice', ['perfect', 'study', 'empty string'], 'The mode is review, so the else-if is true.'),
+      finalBoss(112, `boolean submitted = true;
+boolean graded = false;
+int days = 5;
+String result = "";
+
+if (submitted && graded) {
+    result = "done";
+} else if (submitted && days <= 7) {
+    result = "pending";
+} else {
+    result = "late";
+}`, 'pending', ['done', 'late', 'empty string'], 'submitted is true and days <= 7 is true, while graded is false.'),
+    ],
+  },
 ];
