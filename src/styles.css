@@ -97,8 +97,8 @@ h1 {
 
 .setup-title {
   max-width: 760px;
-  font-size: clamp(3rem, 9vw, 6.4rem);
-  line-height: 0.9;
+  font-size: clamp(2.6rem, 7.5vw, 5.4rem);
+  line-height: 0.92;
 }
 
 h2 {
